@@ -1,33 +1,4 @@
-export default function Header() {
-  return (
-    <header className="h-16 bg-white border-b flex items-center justify-between px-8">
-
-      <div>
-
-        <h2 className="text-2xl font-bold">
-
-          Dashboard
-
-        </h2>
-
-      </div>
-
-      <div className="flex items-center gap-3">
-
-        <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
-
-          B
-
-        </div>
-
-        <div>
-
-          Bohouš
-
-        </div>
-
-      </div>
-
-    </header>
-  );
-}
+import { useLocation } from "react-router-dom";
+import { Menu } from "lucide-react";
+const titles = { "/": "Přehled", "/calendar": "Kalendář", "/visits": "Návštěvy", "/work": "Brigády", "/finance": "Finance", "/reports": "Reporty", "/settings": "Nastavení" };
+export default function Header({ onMenuClick }) { const { pathname } = useLocation(); return <header className="flex h-16 shrink-0 items-center justify-between border-b bg-white px-4 md:px-8"><div className="flex items-center gap-3"><button aria-label="Otevřít navigaci" className="rounded p-2 hover:bg-slate-100 md:hidden" onClick={onMenuClick}><Menu /></button><h2 className="text-xl font-bold md:text-2xl">{titles[pathname] ?? "Chalupa Manager"}</h2></div><div className="hidden items-center gap-3 sm:flex"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 font-bold text-white">S</div><span>Správce</span></div></header>; }

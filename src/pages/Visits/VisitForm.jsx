@@ -1,270 +1,36 @@
 import { useEffect, useState } from "react";
-import { addVisit } from "../../services/visitService";
+import { addVisit, updateVisit } from "../../services/visitService";
 import { getFamilies } from "../../services/familyService";
 
 const PRICE_PER_NIGHT = 350;
 const HEATING_PRICE = 100;
+const empty = { familyId: "", family: "", arrival: "", departure: "", heating: false, paid: false, note: "" };
 
-export default function VisitForm() {
+export default function VisitForm({ selectedVisit, onSaved, onCancel }) {
   const [families, setFamilies] = useState([]);
-
-  const [familyId, setFamilyId] = useState("");
-  const [familyName, setFamilyName] = useState("");
-
-  const [arrival, setArrival] = useState("");
-  const [departure, setDeparture] = useState("");
-
-  const [heating, setHeating] = useState(false);
-
-  const [note, setNote] = useState("");
-
-  useEffect(() => {
-    loadFamilies();
-  }, []);
-
-  async function loadFamilies() {
-    try {
-      const data = await getFamilies();
-      setFamilies(data);
-    } catch (err) {
-      console.error(err);
-    }
+  const [form, setForm] = useState(empty);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { getFamilies().then(setFamilies).catch(console.error); }, []);
+  useEffect(() => { setForm(selectedVisit ? { ...empty, ...selectedVisit } : empty); }, [selectedVisit]);
+  const nights = form.arrival && form.departure ? Math.max(0, Math.round((new Date(`${form.departure}T00:00:00`) - new Date(`${form.arrival}T00:00:00`)) / 86400000)) : 0;
+  const total = nights * PRICE_PER_NIGHT + (form.heating ? HEATING_PRICE : 0);
+  const change = (name, value) => setForm((current) => ({ ...current, [name]: value }));
+  async function submit(event) {
+    event.preventDefault();
+    if (!form.familyId || !form.arrival || !form.departure || !nights) return alert("Vyberte rodinu a platný termín pobytu.");
+    const data = { ...form, nights, pricePerNight: PRICE_PER_NIGHT, heatingPrice: form.heating ? HEATING_PRICE : 0, total };
+    setSaving(true);
+    try { selectedVisit ? await updateVisit(selectedVisit.id, data) : await addVisit(data); setForm(empty); onSaved?.(); }
+    catch (error) { console.error(error); alert("Návštěvu se nepodařilo uložit."); }
+    finally { setSaving(false); }
   }
-
-  function calculateNights() {
-    if (!arrival || !departure) return 0;
-
-    const start = new Date(arrival);
-    const end = new Date(departure);
-
-    const diff = end.getTime() - start.getTime();
-
-    if (diff <= 0) return 0;
-
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
-  }
-
-  const nights = calculateNights();
-
-  const accommodation = nights * PRICE_PER_NIGHT;
-
-  const heatingCost = heating ? HEATING_PRICE : 0;
-
-  const total = accommodation + heatingCost;
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-
-    if (!familyId) {
-      alert("Vyber rodinu.");
-      return;
-    }
-
-    if (!arrival || !departure) {
-      alert("Vyber datum.");
-      return;
-    }
-
-    try {
-      await addVisit({
-        familyId,
-        family: familyName,
-
-        arrival,
-        departure,
-
-        nights,
-
-        pricePerNight: PRICE_PER_NIGHT,
-
-        heating,
-
-        heatingPrice: heatingCost,
-
-        total,
-
-        paid: false,
-
-        note,
-      });
-
-      alert("Návštěva byla uložena.");
-
-      setFamilyId("");
-      setFamilyName("");
-      setArrival("");
-      setDeparture("");
-      setHeating(false);
-      setNote("");
-    } catch (err) {
-      console.error(err);
-      alert("Chyba při ukládání.");
-    }
-  }
-
-  return (
-    <div className="rounded-xl bg-white p-6 shadow">
-
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-6"
-      >
-
-        <div>
-
-          <label className="mb-2 block font-semibold">
-            Rodina
-          </label>
-
-          <select
-            className="w-full rounded border p-3"
-            value={familyId}
-            onChange={(e) => {
-              setFamilyId(e.target.value);
-
-              const selected = families.find(
-                (f) => f.id === e.target.value
-              );
-
-              setFamilyName(selected?.name ?? "");
-            }}
-          >
-            <option value="">
-              -- Vyber rodinu --
-            </option>
-
-            {families.map((family) => (
-              <option
-                key={family.id}
-                value={family.id}
-              >
-                {family.name}
-              </option>
-            ))}
-
-          </select>
-
-        </div>
-
-        <div className="grid grid-cols-2 gap-5">
-
-          <div>
-
-            <label className="mb-2 block font-semibold">
-              Příjezd
-            </label>
-
-            <input
-              type="date"
-              className="w-full rounded border p-3"
-              value={arrival}
-              onChange={(e) => setArrival(e.target.value)}
-            />
-
-          </div>
-
-          <div>
-
-            <label className="mb-2 block font-semibold">
-              Odjezd
-            </label>
-
-            <input
-              type="date"
-              className="w-full rounded border p-3"
-              value={departure}
-              onChange={(e) => setDeparture(e.target.value)}
-            />
-
-          </div>
-
-        </div>
-
-        <div className="grid grid-cols-3 gap-5">
-
-          <div>
-
-            <label className="mb-2 block font-semibold">
-              Počet nocí
-            </label>
-
-            <input
-              className="w-full rounded border bg-gray-100 p-3"
-              value={nights}
-              readOnly
-            />
-
-          </div>
-
-          <div>
-
-            <label className="mb-2 block font-semibold">
-              Cena / noc
-            </label>
-
-            <input
-              className="w-full rounded border bg-gray-100 p-3"
-              value={`${PRICE_PER_NIGHT} Kč`}
-              readOnly
-            />
-
-          </div>
-
-          <div>
-
-            <label className="mb-2 block font-semibold">
-              Celkem
-            </label>
-
-            <input
-              className="w-full rounded border bg-gray-100 p-3"
-              value={`${total} Kč`}
-              readOnly
-            />
-
-          </div>
-
-        </div>
-
-        <div className="flex items-center gap-3">
-
-          <input
-            id="heating"
-            type="checkbox"
-            checked={heating}
-            onChange={(e) => setHeating(e.target.checked)}
-          />
-
-          <label htmlFor="heating">
-            Topení (+100 Kč)
-          </label>
-
-        </div>
-
-        <div>
-
-          <label className="mb-2 block font-semibold">
-            Poznámka
-          </label>
-
-          <textarea
-            className="w-full rounded border p-3"
-            rows="4"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
-
-        </div>
-
-        <button
-          type="submit"
-          className="rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700"
-        >
-          Uložit návštěvu
-        </button>
-
-      </form>
-
-    </div>
-  );
+  return <div className="rounded-xl bg-white p-6 shadow"><div className="mb-5 flex items-center justify-between"><h2 className="text-xl font-semibold">{selectedVisit ? "Upravit návštěvu" : "Nová návštěva"}</h2>{selectedVisit && <button type="button" onClick={onCancel} className="text-sm text-slate-600 hover:underline">Zrušit úpravy</button>}</div><form onSubmit={submit} className="space-y-5">
+    <label className="block font-medium">Rodina<select required className="mt-1 w-full rounded border p-3" value={form.familyId} onChange={(e) => { const family = families.find((item) => item.id === e.target.value); setForm((current) => ({ ...current, familyId: e.target.value, family: family?.name ?? "" })); }}><option value="">— vyberte rodinu —</option>{families.filter((family) => family.active !== false).map((family) => <option key={family.id} value={family.id}>{family.name}</option>)}</select></label>
+    <div className="grid gap-4 sm:grid-cols-2"><label className="font-medium">Příjezd<input required type="date" className="mt-1 w-full rounded border p-3" value={form.arrival} onChange={(e) => change("arrival", e.target.value)} /></label><label className="font-medium">Odjezd<input required type="date" className="mt-1 w-full rounded border p-3" value={form.departure} onChange={(e) => change("departure", e.target.value)} /></label></div>
+    <div className="grid gap-4 sm:grid-cols-3"><Info label="Počet nocí" value={nights} /><Info label="Cena za noc" value={`${PRICE_PER_NIGHT} Kč`} /><Info label="Celkem" value={`${total.toLocaleString("cs-CZ")} Kč`} /></div>
+    <div className="flex flex-wrap gap-6"><label className="flex items-center gap-2"><input type="checkbox" checked={form.heating} onChange={(e) => change("heating", e.target.checked)} />Topení (+100 Kč)</label><label className="flex items-center gap-2"><input type="checkbox" checked={form.paid} onChange={(e) => change("paid", e.target.checked)} />Zaplaceno</label></div>
+    <label className="block font-medium">Poznámka<textarea className="mt-1 w-full rounded border p-3" rows="3" value={form.note} onChange={(e) => change("note", e.target.value)} /></label>
+    <button disabled={saving} className="rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-60">{saving ? "Ukládám…" : selectedVisit ? "Uložit změny" : "Uložit návštěvu"}</button>
+  </form></div>;
 }
+function Info({ label, value }) { return <label className="font-medium">{label}<output className="mt-1 block rounded border bg-slate-50 p-3 font-normal">{value}</output></label>; }

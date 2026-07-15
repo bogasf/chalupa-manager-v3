@@ -1,3 +1,11 @@
+import { useEffect, useMemo, useState } from "react";
+import { subscribeVisits } from "../../services/visitService";
+import { subscribeWorkEntries } from "../../services/workService";
 export default function Reports() {
-  return <h1>Reporty</h1>;
+  const [visits, setVisits] = useState([]), [work, setWork] = useState([]);
+  useEffect(() => { const a = subscribeVisits(setVisits), b = subscribeWorkEntries(setWork); return () => { a(); b(); }; }, []);
+  const familyStats = useMemo(() => Object.values([...visits.reduce((map, item) => { const stat = map.get(item.familyId) ?? { name: item.family, nights: 0, paid: 0, visits: 0 }; stat.nights += Number(item.nights || 0); stat.paid += item.paid ? Number(item.total || 0) : 0; stat.visits += 1; map.set(item.familyId, stat); return map; }, new Map()).values()]).sort((a, b) => b.nights - a.nights), [visits]);
+  const workByFamily = useMemo(() => Array.from(work.reduce((map, item) => map.set(item.family, (map.get(item.family) || 0) + Number(item.hours || 0)), new Map()), ([name, hours]) => ({ name, hours })).sort((a, b) => b.hours - a.hours), [work]);
+  return <div className="space-y-6"><div><h1 className="text-3xl font-bold">Reporty</h1><p className="text-slate-500">Souhrn pobytů, uhrazených plateb a brigád.</p></div><div className="grid gap-6 xl:grid-cols-2"><ReportTable title="Návštěvy podle rodin" headers={["Rodina", "Pobytů", "Nocí", "Uhrazeno"]} rows={familyStats.map((item) => [item.name, item.visits, item.nights, `${item.paid.toLocaleString("cs-CZ")} Kč`])} empty="Zatím nejsou data o návštěvách." /><ReportTable title="Brigády podle rodin" headers={["Rodina", "Odpracováno"]} rows={workByFamily.map((item) => [item.name, `${item.hours} h`])} empty="Zatím nejsou data o brigádách." /></div></div>;
 }
+function ReportTable({ title, headers, rows, empty }) { return <section className="overflow-hidden rounded-xl bg-white shadow"><h2 className="p-6 text-xl font-semibold">{title}</h2>{rows.length ? <table className="w-full"><thead className="bg-slate-100"><tr>{headers.map((header) => <th key={header} className="p-3 text-left">{header}</th>)}</tr></thead><tbody>{rows.map((row, index) => <tr key={index} className="border-t">{row.map((value, cell) => <td key={cell} className="p-3">{value}</td>)}</tr>)}</tbody></table> : <p className="px-6 pb-6 text-slate-500">{empty}</p>}</section>; }

@@ -1,33 +1,12 @@
-import {
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  updateDoc,
-  doc
-} from "firebase/firestore";
-
+import { collection, addDoc, deleteDoc, getDocs, updateDoc, doc, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "../config/firebase";
 
 const familiesRef = collection(db, "families");
-
 export async function getFamilies() {
-  const snapshot = await getDocs(familiesRef);
-
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
+  const snapshot = await getDocs(query(familiesRef, orderBy("name")));
+  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
 }
-
-export async function addFamily(data) {
-  return await addDoc(familiesRef, data);
-}
-
-export async function deleteFamily(id) {
-  return await deleteDoc(doc(db, "families", id));
-}
-
-export async function updateFamily(id, data) {
-  return await updateDoc(doc(db, "families", id), data);
-}
+export const addFamily = (data) => addDoc(familiesRef, data);
+export const deleteFamily = (id) => deleteDoc(doc(db, "families", id));
+export const updateFamily = (id, data) => updateDoc(doc(db, "families", id), data);
+export const subscribeFamilies = (callback) => onSnapshot(query(familiesRef, orderBy("name")), (snapshot) => callback(snapshot.docs.map((item) => ({ id: item.id, ...item.data() }))));
