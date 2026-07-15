@@ -1,4 +1,106 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, CalendarDays, Home, Hammer, Wallet, BarChart3, Settings, X } from "lucide-react";
-const menu = [{ title: "Přehled", icon: LayoutDashboard, url: "/" }, { title: "Kalendář", icon: CalendarDays, url: "/calendar" }, { title: "Návštěvy", icon: Home, url: "/visits" }, { title: "Brigády", icon: Hammer, url: "/work" }, { title: "Finance", icon: Wallet, url: "/finance" }, { title: "Reporty", icon: BarChart3, url: "/reports" }, { title: "Nastavení", icon: Settings, url: "/settings" }];
-export default function Sidebar({ open, onClose }) { return <><button aria-label="Zavřít navigaci" onClick={onClose} className={`fixed inset-0 z-30 bg-slate-950/50 md:hidden ${open ? "block" : "hidden"}`} /><aside className={`fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col bg-slate-900 text-white transition-transform md:static md:translate-x-0 ${open ? "translate-x-0" : ""}`}><div className="flex h-16 items-center justify-between border-b border-slate-700 px-6"><h1 className="text-xl font-bold">Chalupa Manager</h1><button aria-label="Zavřít navigaci" className="md:hidden" onClick={onClose}><X /></button></div><nav className="flex-1 py-4">{menu.map(({ title, icon: Icon, url }) => <NavLink key={url} to={url} onClick={onClose} end={url === "/"} className={({ isActive }) => `mx-3 mb-2 flex items-center gap-3 rounded-lg px-4 py-3 transition ${isActive ? "bg-blue-600" : "hover:bg-slate-800"}`}><Icon size={20} />{title}</NavLink>)}</nav></aside></>; }
+import {
+  LayoutDashboard,
+  CalendarDays,
+  Home,
+  Hammer,
+  Flame,
+  Wallet,
+  BarChart3,
+  Settings,
+  X,
+} from "lucide-react";
+
+const menu = [
+  {
+    title: "Přehled",
+    icon: LayoutDashboard,
+    url: "/",
+  },
+  {
+    title: "Kalendář",
+    icon: CalendarDays,
+    url: "/calendar",
+  },
+  {
+    title: "Návštěvy",
+    icon: Home,
+    url: "/visits",
+  },
+  {
+    title: "Brigády",
+    icon: Hammer,
+    url: "/work",
+  },
+  {
+    title: "Plyn",
+    icon: Flame,
+    url: "/gas",
+  },
+  {
+    title: "Finance",
+    icon: Wallet,
+    url: "/finance",
+  },
+  {
+    title: "Reporty",
+    icon: BarChart3,
+    url: "/reports",
+  },
+  {
+    title: "Nastavení",
+    icon: Settings,
+    url: "/settings",
+  },
+];
+
+export default function Sidebar({ open, onClose }) {
+  return (
+    <>
+      <button
+        aria-label="Zavřít navigaci"
+        onClick={onClose}
+        className={`fixed inset-0 z-30 bg-slate-950/50 md:hidden ${
+          open ? "block" : "hidden"
+        }`}
+      />
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col bg-slate-900 text-white transition-transform md:static md:translate-x-0 ${
+          open ? "translate-x-0" : ""
+        }`}
+      >
+        <div className="flex h-16 items-center justify-between border-b border-slate-700 px-6">
+          <h1 className="text-xl font-bold">Chalupa Manager</h1>
+
+          <button
+            aria-label="Zavřít navigaci"
+            className="md:hidden"
+            onClick={onClose}
+          >
+            <X />
+          </button>
+        </div>
+
+        <nav className="flex-1 py-4">
+          {menu.map(({ title, icon: Icon, url }) => (
+            <NavLink
+              key={url}
+              to={url}
+              onClick={onClose}
+              end={url === "/"}
+              className={({ isActive }) =>
+                `mx-3 mb-2 flex items-center gap-3 rounded-lg px-4 py-3 transition ${
+                  isActive ? "bg-blue-600" : "hover:bg-slate-800"
+                }`
+              }
+            >
+              <Icon size={20} />
+              {title}
+            </NavLink>
+          ))}
+        </nav>
+      </aside>
+    </>
+  );
+}

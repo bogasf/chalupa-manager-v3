@@ -20,7 +20,8 @@
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.58.1",
     "react-qr-code": "^2.2.0",
-    "react-router-dom": "^7.6.3"
+    "react-router-dom": "^7.6.3",
+    "recharts": "^3.9.2"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.11",
