@@ -5,6 +5,7 @@ import AppLayout from "../layouts/AppLayout";
 import Dashboard from "../pages/Dashboard";
 import Calendar from "../pages/Calendar";
 import Visits from "../pages/Visits";
+import GuestRoom from "../pages/GuestRoom";
 import Work from "../pages/Work";
 import Gas from "../pages/Gas";
 import Finance from "../pages/Finance";
@@ -27,6 +28,10 @@ const router = createBrowserRouter([
       {
         path: "visits",
         element: <Visits />,
+      },
+      {
+        path: "guest-room",
+        element: <GuestRoom />,
       },
       {
         path: "work",

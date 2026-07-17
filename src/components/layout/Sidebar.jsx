@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   CalendarDays,
   Home,
+  BedDouble,
   Hammer,
   Flame,
   Wallet,
@@ -26,6 +27,11 @@ const menu = [
     title: "Návštěvy",
     icon: Home,
     url: "/visits",
+  },
+  {
+    title: "Návštěvnický pokoj",
+    icon: BedDouble,
+    url: "/guest-room",
   },
   {
     title: "Brigády",
@@ -71,7 +77,9 @@ export default function Sidebar({ open, onClose }) {
         }`}
       >
         <div className="flex h-16 items-center justify-between border-b border-slate-700 px-6">
-          <h1 className="text-xl font-bold">Chalupa Manager</h1>
+          <h1 className="text-xl font-bold">
+            Chalupa Manager
+          </h1>
 
           <button
             aria-label="Zavřít navigaci"
@@ -87,11 +95,13 @@ export default function Sidebar({ open, onClose }) {
             <NavLink
               key={url}
               to={url}
-              onClick={onClose}
               end={url === "/"}
+              onClick={onClose}
               className={({ isActive }) =>
                 `mx-3 mb-2 flex items-center gap-3 rounded-lg px-4 py-3 transition ${
-                  isActive ? "bg-blue-600" : "hover:bg-slate-800"
+                  isActive
+                    ? "bg-blue-600"
+                    : "hover:bg-slate-800"
                 }`
               }
             >

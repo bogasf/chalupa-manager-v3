@@ -1,5 +1,6 @@
 import { useState } from "react";
 import SettlementTab from "./SettlementTab";
+import GuestRoomSettlementTab from "./GuestRoomSettlementTab";
 import CashBookTab from "./CashBookTab";
 
 export default function Finance() {
@@ -9,12 +10,14 @@ export default function Finance() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Finance</h1>
+
         <p className="text-slate-500">
-          Vyúčtování rodin a pokladna chalupy.
+          Vyúčtování rodin, návštěvnického pokoje a pokladna chalupy.
         </p>
       </div>
 
       <div className="flex gap-2 border-b">
+
         <button
           onClick={() => setTab("settlement")}
           className={`rounded-t-lg px-5 py-3 font-medium ${
@@ -27,6 +30,17 @@ export default function Finance() {
         </button>
 
         <button
+          onClick={() => setTab("guestroom")}
+          className={`rounded-t-lg px-5 py-3 font-medium ${
+            tab === "guestroom"
+              ? "bg-blue-600 text-white"
+              : "bg-slate-100 hover:bg-slate-200"
+          }`}
+        >
+          🛏️ Návštěvnický pokoj
+        </button>
+
+        <button
           onClick={() => setTab("cashbook")}
           className={`rounded-t-lg px-5 py-3 font-medium ${
             tab === "cashbook"
@@ -36,13 +50,21 @@ export default function Finance() {
         >
           💰 Pokladna
         </button>
+
       </div>
 
-      {tab === "settlement" ? (
+      {tab === "settlement" && (
         <SettlementTab />
-      ) : (
+      )}
+
+      {tab === "guestroom" && (
+        <GuestRoomSettlementTab />
+      )}
+
+      {tab === "cashbook" && (
         <CashBookTab />
       )}
+
     </div>
   );
 }

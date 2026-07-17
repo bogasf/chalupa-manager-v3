@@ -7,6 +7,7 @@ import {
   subscribeWorkEntries,
   updateWorkEntry,
 } from "../../services/workService";
+import { addActivity } from "../../services/activityService";
 
 const blank = {
   familyId: "",
@@ -70,14 +71,35 @@ export default function Work() {
           : form.workType,
     };
 
-    if (editing) {
-      await updateWorkEntry(editing, data);
-    } else {
-      await addWorkEntry(data);
-    }
+    try {
+      if (editing) {
+        await updateWorkEntry(editing, data);
 
-    setForm(blank);
-    setEditing(null);
+        await addActivity({
+          type: "work",
+          icon: "✏️",
+          title: "Brigáda upravena",
+          description: data.work,
+          user: data.family,
+        });
+      } else {
+        await addWorkEntry(data);
+
+        await addActivity({
+          type: "work",
+          icon: "🔨",
+          title: "Nová brigáda",
+          description: data.work,
+          user: data.family,
+        });
+      }
+
+      setForm(blank);
+      setEditing(null);
+    } catch (err) {
+      console.error(err);
+      alert("Nepodařilo se uložit brigádu.");
+    }
   }
 
   function edit(entry) {
@@ -94,9 +116,30 @@ export default function Work() {
       note: entry.note ?? "",
     });
   }
-   return (
-    <div className="space-y-6">
 
+  async function remove(entry) {
+    if (!window.confirm("Opravdu chcete smazat brigádu?")) {
+      return;
+    }
+
+    try {
+      await deleteWorkEntry(entry.id);
+
+      await addActivity({
+        type: "work",
+        icon: "🗑️",
+        title: "Brigáda smazána",
+        description: entry.work,
+        user: entry.family,
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Nepodařilo se smazat brigádu.");
+    }
+  }
+
+  return (
+    <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Brigády</h1>
 
@@ -106,7 +149,6 @@ export default function Work() {
       </div>
 
       <div className="rounded-xl bg-white p-6 shadow">
-
         <h2 className="mb-4 text-xl font-semibold">
           {editing ? "Upravit brigádu" : "Nový záznam"}
         </h2>
@@ -115,7 +157,6 @@ export default function Work() {
           onSubmit={submit}
           className="grid gap-4 md:grid-cols-2"
         >
-
           <select
             required
             className="rounded border p-3"
@@ -137,10 +178,7 @@ export default function Work() {
             {families
               .filter((item) => item.active !== false)
               .map((item) => (
-                <option
-                  key={item.id}
-                  value={item.id}
-                >
+                <option key={item.id} value={item.id}>
                   {item.name}
                 </option>
               ))}
@@ -167,10 +205,7 @@ export default function Work() {
             {workTypes
               .filter((item) => item.active !== false)
               .map((item) => (
-                <option
-                  key={item.id}
-                  value={item.id}
-                >
+                <option key={item.id} value={item.id}>
                   {item.name}
                 </option>
               ))}
@@ -233,10 +268,7 @@ export default function Work() {
           />
 
           <div className="flex gap-3 md:col-span-2">
-
-            <button
-              className="rounded bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
-            >
+            <button className="rounded bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700">
               {editing ? "Uložit změny" : "Přidat brigádu"}
             </button>
 
@@ -252,82 +284,42 @@ export default function Work() {
                 Zrušit
               </button>
             )}
-
           </div>
-
         </form>
-
       </div>
 
       <div className="overflow-x-auto rounded-xl bg-white shadow">
-
         {entries.length ? (
-
           <table className="w-full">
-
             <thead className="bg-slate-100">
-
               <tr>
-
-                <th className="p-3 text-left">
-                  Datum
-                </th>
-
-                <th className="p-3 text-left">
-                  Rodina
-                </th>
-
-                <th className="p-3 text-left">
-                  Práce
-                </th>
-
-                <th className="p-3 text-right">
-                  Hodin
-                </th>
-
-                <th className="p-3 text-left">
-                  Poznámka
-                </th>
-
-                <th className="p-3">
-                  Akce
-                </th>
-
+                <th className="p-3 text-left">Datum</th>
+                <th className="p-3 text-left">Rodina</th>
+                <th className="p-3 text-left">Práce</th>
+                <th className="p-3 text-right">Hodin</th>
+                <th className="p-3 text-left">Poznámka</th>
+                <th className="p-3">Akce</th>
               </tr>
-
             </thead>
 
             <tbody>
-
               {entries.map((entry) => (
-
-                <tr
-                  key={entry.id}
-                  className="border-t"
-                >
-
-                  <td className="p-3">
-                    {entry.date}
-                  </td>
+                <tr key={entry.id} className="border-t">
+                  <td className="p-3">{entry.date}</td>
 
                   <td className="p-3 font-medium">
                     {entry.family}
                   </td>
 
-                  <td className="p-3">
-                    {entry.work}
-                  </td>
+                  <td className="p-3">{entry.work}</td>
 
                   <td className="p-3 text-right">
                     {entry.hours}
                   </td>
 
-                  <td className="p-3">
-                    {entry.note}
-                  </td>
+                  <td className="p-3">{entry.note}</td>
 
                   <td className="p-3 text-center">
-
                     <button
                       onClick={() => edit(entry)}
                       className="mr-3 text-blue-700 hover:underline"
@@ -336,37 +328,22 @@ export default function Work() {
                     </button>
 
                     <button
-                      onClick={() =>
-                        window.confirm(
-                          "Smazat brigádu?"
-                        ) &&
-                        deleteWorkEntry(entry.id)
-                      }
+                      onClick={() => remove(entry)}
                       className="text-red-700 hover:underline"
                     >
                       Smazat
                     </button>
-
                   </td>
-
                 </tr>
-
               ))}
-
             </tbody>
-
           </table>
-
         ) : (
-
           <p className="p-8 text-center text-slate-500">
             Zatím nejsou zapsané žádné brigády.
           </p>
-
         )}
-
       </div>
-
     </div>
   );
-} 
+}

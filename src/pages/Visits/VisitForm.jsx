@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { addVisit, updateVisit } from "../../services/visitService";
 import { getFamilies } from "../../services/familyService";
 import { getSettings } from "../../services/settingsService";
+import { addActivity } from "../../services/activityService";
 
 const empty = {
   familyId: "",
@@ -13,7 +14,11 @@ const empty = {
   note: "",
 };
 
-export default function VisitForm({ selectedVisit, onSaved, onCancel }) {
+export default function VisitForm({
+  selectedVisit,
+  onSaved,
+  onCancel,
+}) {
   const [families, setFamilies] = useState([]);
   const [saving, setSaving] = useState(false);
 
@@ -41,7 +46,11 @@ export default function VisitForm({ selectedVisit, onSaved, onCancel }) {
   }, []);
 
   useEffect(() => {
-    setForm(selectedVisit ? { ...empty, ...selectedVisit } : empty);
+    setForm(
+      selectedVisit
+        ? { ...empty, ...selectedVisit }
+        : empty
+    );
   }, [selectedVisit]);
 
   const nights =
@@ -75,22 +84,30 @@ export default function VisitForm({ selectedVisit, onSaved, onCancel }) {
     }
 
     if (!form.arrival || !form.departure) {
-      return alert("Vyplňte datum příjezdu i odjezdu.");
+      return alert(
+        "Vyplňte datum příjezdu i odjezdu."
+      );
     }
 
     if (form.departure < form.arrival) {
-      return alert("Datum odjezdu nesmí být dříve než příjezd.");
+      return alert(
+        "Datum odjezdu nesmí být dříve než příjezd."
+      );
     }
 
     if (!nights) {
-      return alert("Pobyt musí mít alespoň jednu noc.");
+      return alert(
+        "Pobyt musí mít alespoň jednu noc."
+      );
     }
 
     const data = {
       ...form,
       nights,
       pricePerNight: settings.pricePerNight,
-      heatingPrice: form.heating ? settings.heatingPrice : 0,
+      heatingPrice: form.heating
+        ? settings.heatingPrice
+        : 0,
       total,
     };
 
@@ -99,8 +116,24 @@ export default function VisitForm({ selectedVisit, onSaved, onCancel }) {
     try {
       if (selectedVisit) {
         await updateVisit(selectedVisit.id, data);
+
+        await addActivity({
+          type: "visit",
+          icon: "✏️",
+          title: "Návštěva upravena",
+          description: `${data.arrival} – ${data.departure}`,
+          user: data.family,
+        });
       } else {
         await addVisit(data);
+
+        await addActivity({
+          type: "visit",
+          icon: "📅",
+          title: "Nová návštěva",
+          description: `${data.arrival} – ${data.departure}`,
+          user: data.family,
+        });
       }
 
       setForm(empty);
@@ -114,11 +147,16 @@ export default function VisitForm({ selectedVisit, onSaved, onCancel }) {
       setSaving(false);
     }
   }
-    return (
+
+  return (
     <div className="rounded-xl bg-white p-6 shadow">
+
       <div className="mb-5 flex items-center justify-between">
+
         <h2 className="text-xl font-semibold">
-          {selectedVisit ? "Upravit návštěvu" : "Nová návštěva"}
+          {selectedVisit
+            ? "Upravit návštěvu"
+            : "Nová návštěva"}
         </h2>
 
         {selectedVisit && (
@@ -130,11 +168,16 @@ export default function VisitForm({ selectedVisit, onSaved, onCancel }) {
             Zrušit úpravy
           </button>
         )}
+
       </div>
 
-      <form onSubmit={submit} className="space-y-5">
+      <form
+        onSubmit={submit}
+        className="space-y-5"
+      >
 
         <label className="block font-medium">
+
           Rodina
 
           <select
@@ -143,7 +186,8 @@ export default function VisitForm({ selectedVisit, onSaved, onCancel }) {
             value={form.familyId}
             onChange={(e) => {
               const family = families.find(
-                (item) => item.id === e.target.value
+                (item) =>
+                  item.id === e.target.value
               );
 
               setForm((current) => ({
@@ -153,10 +197,15 @@ export default function VisitForm({ selectedVisit, onSaved, onCancel }) {
               }));
             }}
           >
-            <option value="">— vyberte rodinu —</option>
+            <option value="">
+              — vyberte rodinu —
+            </option>
 
             {families
-              .filter((family) => family.active !== false)
+              .filter(
+                (family) =>
+                  family.active !== false
+              )
               .map((family) => (
                 <option
                   key={family.id}
@@ -165,12 +214,15 @@ export default function VisitForm({ selectedVisit, onSaved, onCancel }) {
                   {family.name}
                 </option>
               ))}
+
           </select>
+
         </label>
 
         <div className="grid gap-4 sm:grid-cols-2">
 
           <label className="font-medium">
+
             Příjezd
 
             <input
@@ -179,12 +231,17 @@ export default function VisitForm({ selectedVisit, onSaved, onCancel }) {
               className="mt-1 w-full rounded border p-3"
               value={form.arrival}
               onChange={(e) =>
-                change("arrival", e.target.value)
+                change(
+                  "arrival",
+                  e.target.value
+                )
               }
             />
+
           </label>
 
           <label className="font-medium">
+
             Odjezd
 
             <input
@@ -193,9 +250,13 @@ export default function VisitForm({ selectedVisit, onSaved, onCancel }) {
               className="mt-1 w-full rounded border p-3"
               value={form.departure}
               onChange={(e) =>
-                change("departure", e.target.value)
+                change(
+                  "departure",
+                  e.target.value
+                )
               }
             />
+
           </label>
 
         </div>
@@ -214,7 +275,9 @@ export default function VisitForm({ selectedVisit, onSaved, onCancel }) {
 
           <Info
             label="Celkem"
-            value={`${total.toLocaleString("cs-CZ")} Kč`}
+            value={`${total.toLocaleString(
+              "cs-CZ"
+            )} Kč`}
           />
 
         </div>
@@ -227,7 +290,10 @@ export default function VisitForm({ selectedVisit, onSaved, onCancel }) {
               type="checkbox"
               checked={form.heating}
               onChange={(e) =>
-                change("heating", e.target.checked)
+                change(
+                  "heating",
+                  e.target.checked
+                )
               }
             />
 
@@ -241,7 +307,10 @@ export default function VisitForm({ selectedVisit, onSaved, onCancel }) {
               type="checkbox"
               checked={form.paid}
               onChange={(e) =>
-                change("paid", e.target.checked)
+                change(
+                  "paid",
+                  e.target.checked
+                )
               }
             />
 
@@ -290,9 +359,7 @@ function Info({ label, value }) {
       {label}
 
       <output className="mt-1 block rounded border bg-slate-50 p-3 font-normal">
-
         {value}
-
       </output>
 
     </label>

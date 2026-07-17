@@ -55,7 +55,12 @@ export default function SettlementTab() {
           (item) => item.familyId === family.id
         );
 
-        const visitTotal = familyVisits.reduce(
+        // ✅ pouze nezaplacené návštěvy
+        const unpaidVisits = familyVisits.filter(
+          (item) => item.paid !== true
+        );
+
+        const visitTotal = unpaidVisits.reduce(
           (sum, item) => sum + Number(item.total || 0),
           0
         );
@@ -81,96 +86,115 @@ export default function SettlementTab() {
         };
       });
   }, [families, visits, workEntries, settings]);
+
   return (
-  <>
-    <div className="overflow-x-auto rounded-xl bg-white shadow">
+    <>
+      <div className="overflow-x-auto rounded-xl bg-white shadow">
 
-      <table className="w-full">
+        <table className="w-full">
 
-        <thead className="bg-slate-100">
+          <thead className="bg-slate-100">
 
-          <tr>
+            <tr>
+              <th className="p-3 text-left">
+                Rodina
+              </th>
 
-            <th className="p-3 text-left">
-              Rodina
-            </th>
+              <th className="p-3 text-right">
+                Nezaplacené návštěvy
+              </th>
 
-            <th className="p-3 text-right">
-              Návštěvy
-            </th>
+              <th className="p-3 text-right">
+                Brigády
+              </th>
 
-            <th className="p-3 text-right">
-              Brigády
-            </th>
+              <th className="p-3 text-right">
+                K úhradě
+              </th>
 
-            <th className="p-3 text-right">
-              K úhradě
-            </th>
-
-            <th className="p-3 text-center">
-              QR
-            </th>
-
-          </tr>
-
-        </thead>
-
-        <tbody>
-
-          {rows.map((row) => (
-
-            <tr
-              key={row.id}
-              className="border-t hover:bg-slate-50"
-            >
-
-              <td className="p-3 font-medium">
-                {row.family}
-              </td>
-
-              <td className="p-3 text-right">
-                {money(row.visitTotal)}
-              </td>
-
-              <td className="p-3 text-right text-emerald-700">
-                - {money(row.workCredit)}
-              </td>
-
-              <td className="p-3 text-right text-lg font-bold">
-                {money(row.balance)}
-              </td>
-
-              <td className="p-3 text-center">
-
-                <button
-                  onClick={() => {
-                    setSelectedRow(row);
-                    setQrOpen(true);
-                  }}
-                  className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                >
-                  📱 QR
-                </button>
-
-              </td>
-
+              <th className="p-3 text-center">
+                QR
+              </th>
             </tr>
 
-          ))}
+          </thead>
 
-        </tbody>
+          <tbody>
 
-      </table>
+            {rows.map((row) => (
 
-    </div>
+              <tr
+                key={row.id}
+                className="border-t hover:bg-slate-50"
+              >
 
-    <QRPaymentModal
-      open={qrOpen}
-      onClose={() => setQrOpen(false)}
-      family={selectedRow?.family ?? ""}
-      amount={selectedRow?.balance ?? 0}
-      settings={settings}
-    />
-  </>
-);
+                <td className="p-3 font-medium">
+                  {row.family}
+                </td>
+
+                <td className="p-3 text-right">
+                  {money(row.visitTotal)}
+                </td>
+
+                <td className="p-3 text-right text-emerald-700">
+                  - {money(row.workCredit)}
+                </td>
+
+                <td className="p-3 text-right text-lg font-bold">
+
+                  {row.balance > 0 ? (
+                    <span className="text-red-600">
+                      {money(row.balance)}
+                    </span>
+                  ) : (
+                    <span className="text-emerald-600">
+                      {money(row.balance)}
+                    </span>
+                  )}
+
+                </td>
+
+                <td className="p-3 text-center">
+
+                  {row.balance > 0 ? (
+
+                    <button
+                      onClick={() => {
+                        setSelectedRow(row);
+                        setQrOpen(true);
+                      }}
+                      className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                    >
+                      📱 QR
+                    </button>
+
+                  ) : (
+
+                    <span className="text-slate-400">
+                      —
+                    </span>
+
+                  )}
+
+                </td>
+
+              </tr>
+
+            ))}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <QRPaymentModal
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        family={selectedRow?.family ?? ""}
+        amount={selectedRow?.balance ?? 0}
+        settings={settings}
+      />
+    </>
+  );
 }
