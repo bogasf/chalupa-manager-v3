@@ -14,16 +14,29 @@ import { db } from "../config/firebase";
 
 const guestRoomRef = collection(db, "guestRoomReservations");
 
+/**
+ * Vytvoření nové rezervace
+ */
 export async function addGuestRoomReservation(data) {
   return addDoc(guestRoomRef, {
     ...data,
+
+    // finance
+    price: data.price ?? 100,
     paid: false,
     paidAt: null,
+    paymentMethod: "",
+    paymentNote: "",
+
+    // systém
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
 }
 
+/**
+ * Úprava rezervace
+ */
 export async function updateGuestRoomReservation(id, data) {
   return updateDoc(doc(db, "guestRoomReservations", id), {
     ...data,
@@ -31,10 +44,56 @@ export async function updateGuestRoomReservation(id, data) {
   });
 }
 
+/**
+ * Smazání rezervace
+ */
 export async function deleteGuestRoomReservation(id) {
   return deleteDoc(doc(db, "guestRoomReservations", id));
 }
 
+/**
+ * Označit rezervaci jako zaplacenou / nezaplacenou
+ */
+export async function markGuestRoomPaid(
+  id,
+  paid,
+  paymentMethod = "",
+  paymentNote = "",
+  price = 100
+) {
+  return updateDoc(doc(db, "guestRoomReservations", id), {
+    paid,
+    price,
+    paymentMethod,
+    paymentNote,
+    paidAt: paid ? serverTimestamp() : null,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Změna ceny rezervace
+ */
+export async function updateGuestRoomPrice(id, price) {
+  return updateDoc(doc(db, "guestRoomReservations", id), {
+    price: Number(price),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Změna platebních údajů
+ */
+export async function updateGuestRoomPayment(id, data) {
+  return updateDoc(doc(db, "guestRoomReservations", id), {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Realtime odběr všech rezervací
+ */
 export function subscribeGuestRoomReservations(callback) {
   const q = query(
     guestRoomRef,
@@ -51,6 +110,9 @@ export function subscribeGuestRoomReservations(callback) {
   });
 }
 
+/**
+ * Poslední rezervace
+ */
 export function subscribeLastGuestRoomReservation(callback) {
   const q = query(
     guestRoomRef,
@@ -71,6 +133,45 @@ export function subscribeLastGuestRoomReservation(callback) {
 }
 
 /**
+ * Souhrn plateb
+ */
+export function calculateGuestRoomPaymentSummary(reservations) {
+  const totalReservations = reservations.length;
+
+  const paidReservations =
+    reservations.filter((r) => r.paid).length;
+
+  const unpaidReservations =
+    totalReservations - paidReservations;
+
+  const collected =
+    reservations
+      .filter((r) => r.paid)
+      .reduce(
+        (sum, r) =>
+          sum + Number(r.price ?? 100),
+        0
+      );
+
+  const waiting =
+    reservations
+      .filter((r) => !r.paid)
+      .reduce(
+        (sum, r) =>
+          sum + Number(r.price ?? 100),
+        0
+      );
+
+  return {
+    totalReservations,
+    paidReservations,
+    unpaidReservations,
+    collected,
+    waiting,
+  };
+}
+
+/**
  * Vrátí true pokud existuje kolize rezervací
  */
 export function hasReservationConflict(
@@ -87,8 +188,13 @@ export function hasReservationConflict(
       return false;
     }
 
-    const existingArrival = new Date(reservation.arrival);
-    const existingDeparture = new Date(reservation.departure);
+    const existingArrival = new Date(
+      reservation.arrival
+    );
+
+    const existingDeparture = new Date(
+      reservation.departure
+    );
 
     return (
       newArrival < existingDeparture &&
@@ -115,8 +221,13 @@ export function findReservationConflict(
         return false;
       }
 
-      const existingArrival = new Date(reservation.arrival);
-      const existingDeparture = new Date(reservation.departure);
+      const existingArrival = new Date(
+        reservation.arrival
+      );
+
+      const existingDeparture = new Date(
+        reservation.departure
+      );
 
       return (
         newArrival < existingDeparture &&
