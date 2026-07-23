@@ -113,15 +113,32 @@ export default function GuestRoomForm({
     return calculateNights(form.arrival, form.departure);
   }, [form.arrival, form.departure]);
 
-  const roomPrice = Number(settings.guestRoomPrice ?? 100);
+  // Cena za noc
+  const roomPrice = Number(
+    settings.guestRoomPrice ?? 100
+  );
 
-  const heatingPrice = form.heating
-    ? Number(settings.guestRoomHeating ?? 0)
-    : 0;
+  // Cena topení za den
+  const heatingPerDay = Number(
+    settings.guestRoomHeating ?? 100
+  );
 
+  // Cena ubytování
+  const accommodation = useMemo(() => {
+    return nights * roomPrice;
+  }, [nights, roomPrice]);
+
+  // Cena topení za celý pobyt
+  const heatingPrice = useMemo(() => {
+    return form.heating
+      ? nights * heatingPerDay
+      : 0;
+  }, [form.heating, nights, heatingPerDay]);
+
+  // Celková cena
   const total = useMemo(() => {
-    return nights * roomPrice + heatingPrice;
-  }, [nights, roomPrice, heatingPrice]);
+    return accommodation + heatingPrice;
+  }, [accommodation, heatingPrice]);
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
@@ -136,8 +153,7 @@ export default function GuestRoomForm({
           : value,
     }));
   }
-
-  async function handleSubmit(e) {
+    async function handleSubmit(e) {
     e.preventDefault();
 
     if (!form.guestName.trim()) {
@@ -170,7 +186,9 @@ export default function GuestRoomForm({
           reservation
         );
       } else {
-        await addGuestRoomReservation(reservation);
+        await addGuestRoomReservation(
+          reservation
+        );
       }
 
       setForm({
@@ -195,7 +213,8 @@ export default function GuestRoomForm({
       onSubmit={handleSubmit}
       className="space-y-6 rounded-xl bg-white p-6 shadow"
     >
-            <div className="grid gap-6 md:grid-cols-2">
+
+      <div className="grid gap-6 md:grid-cols-2">
 
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -273,7 +292,8 @@ export default function GuestRoomForm({
         </div>
 
         <div className="flex items-end">
-          <label className="flex items-center gap-3 rounded-lg border border-slate-300 px-4 py-3 w-full cursor-pointer">
+
+          <label className="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-slate-300 px-4 py-3">
 
             <input
               type="checkbox"
@@ -284,16 +304,19 @@ export default function GuestRoomForm({
             />
 
             <div>
+
               <div className="font-medium">
                 Topení
               </div>
 
               <div className="text-sm text-slate-500">
-                +{heatingPrice.toLocaleString("cs-CZ")} Kč
+                +{heatingPerDay.toLocaleString("cs-CZ")} Kč / den
               </div>
+
             </div>
 
           </label>
+
         </div>
 
       </div>
@@ -340,12 +363,17 @@ export default function GuestRoomForm({
             </span>
 
             <strong>
-              {(nights * roomPrice).toLocaleString("cs-CZ")} Kč
+              {accommodation.toLocaleString("cs-CZ")} Kč
             </strong>
           </div>
 
           <div className="flex justify-between">
-            <span>Topení</span>
+            <span>
+              Topení
+              {form.heating
+                ? ` (${nights} × ${heatingPerDay.toLocaleString("cs-CZ")} Kč)`
+                : ""}
+            </span>
 
             <strong>
               {heatingPrice.toLocaleString("cs-CZ")} Kč
@@ -354,12 +382,14 @@ export default function GuestRoomForm({
 
           <hr />
 
-          <div className="flex justify-between text-xl font-bold text-blue-700">
-            <span>Celkem</span>
+          <div className="flex justify-between text-xl font-bold text-green-700">
+
+            <span>CELKEM</span>
 
             <span>
               {total.toLocaleString("cs-CZ")} Kč
             </span>
+
           </div>
 
         </div>
@@ -397,7 +427,8 @@ export default function GuestRoomForm({
         </div>
 
       )}
-            <div className="flex justify-end gap-3 pt-4">
+
+      <div className="flex justify-end gap-3 pt-4">
 
         {selectedReservation && (
           <button
