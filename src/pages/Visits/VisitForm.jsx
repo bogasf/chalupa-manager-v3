@@ -65,9 +65,18 @@ export default function VisitForm({
         )
       : 0;
 
-  const total =
-    nights * settings.pricePerNight +
-    (form.heating ? settings.heatingPrice : 0);
+  // Cena ubytování
+  const accommodation =
+    nights * settings.pricePerNight;
+
+  // Topení za každý den
+  const heatingCost =
+    form.heating
+      ? nights * settings.heatingPrice
+      : 0;
+
+  // Celková cena
+  const total = accommodation + heatingCost;
 
   function change(name, value) {
     setForm((current) => ({
@@ -105,14 +114,13 @@ export default function VisitForm({
       ...form,
       nights,
       pricePerNight: settings.pricePerNight,
-      heatingPrice: form.heating
-        ? settings.heatingPrice
-        : 0,
+
+      heatingPrice: heatingCost,
+
       total,
     };
 
     setSaving(true);
-
     try {
       if (selectedVisit) {
         await updateVisit(selectedVisit.id, data);
@@ -137,7 +145,6 @@ export default function VisitForm({
       }
 
       setForm(empty);
-
       onSaved?.();
 
     } catch (error) {
@@ -173,7 +180,7 @@ export default function VisitForm({
 
       <form
         onSubmit={submit}
-        className="space-y-5"
+        className="space-y-6"
       >
 
         <label className="block font-medium">
@@ -186,8 +193,7 @@ export default function VisitForm({
             value={form.familyId}
             onChange={(e) => {
               const family = families.find(
-                (item) =>
-                  item.id === e.target.value
+                (item) => item.id === e.target.value
               );
 
               setForm((current) => ({
@@ -197,6 +203,7 @@ export default function VisitForm({
               }));
             }}
           >
+
             <option value="">
               — vyberte rodinu —
             </option>
@@ -231,10 +238,7 @@ export default function VisitForm({
               className="mt-1 w-full rounded border p-3"
               value={form.arrival}
               onChange={(e) =>
-                change(
-                  "arrival",
-                  e.target.value
-                )
+                change("arrival", e.target.value)
               }
             />
 
@@ -250,35 +254,11 @@ export default function VisitForm({
               className="mt-1 w-full rounded border p-3"
               value={form.departure}
               onChange={(e) =>
-                change(
-                  "departure",
-                  e.target.value
-                )
+                change("departure", e.target.value)
               }
             />
 
           </label>
-
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-3">
-
-          <Info
-            label="Počet nocí"
-            value={nights}
-          />
-
-          <Info
-            label="Cena za noc"
-            value={`${settings.pricePerNight} Kč`}
-          />
-
-          <Info
-            label="Celkem"
-            value={`${total.toLocaleString(
-              "cs-CZ"
-            )} Kč`}
-          />
 
         </div>
 
@@ -290,14 +270,11 @@ export default function VisitForm({
               type="checkbox"
               checked={form.heating}
               onChange={(e) =>
-                change(
-                  "heating",
-                  e.target.checked
-                )
+                change("heating", e.target.checked)
               }
             />
 
-            Topení (+{settings.heatingPrice} Kč)
+            Topení (+{settings.heatingPrice} Kč / den)
 
           </label>
 
@@ -307,16 +284,72 @@ export default function VisitForm({
               type="checkbox"
               checked={form.paid}
               onChange={(e) =>
-                change(
-                  "paid",
-                  e.target.checked
-                )
+                change("paid", e.target.checked)
               }
             />
 
             Zaplaceno
 
           </label>
+
+        </div>
+
+        <div className="rounded-xl border bg-slate-50 p-5">
+
+          <h3 className="mb-4 text-lg font-semibold">
+            Přehled ceny
+          </h3>
+
+          <div className="space-y-2 text-sm">
+
+            <div className="flex justify-between">
+              <span>Počet nocí</span>
+              <strong>{nights}</strong>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Ubytování</span>
+              <strong>
+                {nights} × {settings.pricePerNight} Kč
+              </strong>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Cena ubytování</span>
+              <strong>
+                {accommodation.toLocaleString("cs-CZ")} Kč
+              </strong>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Topení</span>
+              <strong>
+                {form.heating
+                  ? `${nights} × ${settings.heatingPrice} Kč`
+                  : "Ne"}
+              </strong>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Cena topení</span>
+              <strong>
+                {heatingCost.toLocaleString("cs-CZ")} Kč
+              </strong>
+            </div>
+
+            <hr />
+
+            <div className="flex justify-between text-lg font-bold text-green-700">
+
+              <span>CELKEM</span>
+
+              <span>
+                {total.toLocaleString("cs-CZ")} Kč
+              </span>
+
+            </div>
+
+          </div>
 
         </div>
 
@@ -347,11 +380,9 @@ export default function VisitForm({
         </button>
 
       </form>
-
     </div>
   );
 }
-
 function Info({ label, value }) {
   return (
     <label className="font-medium">
