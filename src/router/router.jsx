@@ -10,6 +10,7 @@ import Work from "../pages/Work";
 import Gas from "../pages/Gas";
 import Finance from "../pages/Finance";
 import Reports from "../pages/Reports";
+import Activities from "../pages/Activities";
 import Settings from "../pages/Settings";
 
 const router = createBrowserRouter([
@@ -48,6 +49,10 @@ const router = createBrowserRouter([
       {
         path: "reports",
         element: <Reports />,
+      },
+      {
+        path: "activities",
+        element: <Activities />,
       },
       {
         path: "settings",

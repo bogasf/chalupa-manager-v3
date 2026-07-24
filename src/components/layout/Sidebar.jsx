@@ -9,6 +9,7 @@ import {
   Wallet,
   BarChart3,
   Settings,
+  History,
   X,
 } from "lucide-react";
 
@@ -52,6 +53,11 @@ const menu = [
     title: "Reporty",
     icon: BarChart3,
     url: "/reports",
+  },
+  {
+    title: "Historie aktivit",
+    icon: History,
+    url: "/activities",
   },
   {
     title: "Nastavení",

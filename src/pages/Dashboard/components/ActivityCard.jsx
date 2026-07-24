@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { subscribeActivities } from "../../../services/activityService";
 
 function formatDate(timestamp) {
   if (!timestamp) return "";
 
   const date =
-    typeof timestamp.toDate === "function"
+    typeof timestamp?.toDate === "function"
       ? timestamp.toDate()
       : new Date(timestamp);
 
@@ -20,6 +21,7 @@ function formatDate(timestamp) {
 
 export default function ActivityCard() {
   const [activities, setActivities] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     return subscribeActivities(setActivities);
@@ -106,7 +108,8 @@ export default function ActivityCard() {
 
             <button
               type="button"
-              className="rounded-lg border border-slate-300 bg-white px-5 py-2 font-medium text-slate-700 transition hover:bg-slate-100"
+              onClick={() => navigate("/activities")}
+              className="rounded-lg border border-slate-300 bg-white px-5 py-2 font-medium text-slate-700 transition hover:bg-slate-100 hover:border-blue-500 hover:text-blue-600"
             >
               📜 Zobrazit všechny aktivity
             </button>
