@@ -9,6 +9,7 @@ import GuestRoom from "../pages/GuestRoom";
 import Work from "../pages/Work";
 import Gas from "../pages/Gas";
 import Finance from "../pages/Finance";
+import FixedCosts from "../pages/FixedCosts";
 import Reports from "../pages/Reports";
 import Activities from "../pages/Activities";
 import Settings from "../pages/Settings";
@@ -45,6 +46,10 @@ const router = createBrowserRouter([
       {
         path: "finance",
         element: <Finance />,
+      },
+      {
+        path: "fixed-costs",
+        element: <FixedCosts />,
       },
       {
         path: "reports",

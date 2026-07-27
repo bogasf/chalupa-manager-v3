@@ -6,6 +6,7 @@ import { subscribeFamilies } from "../../services/familyService";
 import { subscribeVisits } from "../../services/visitService";
 import { subscribeWorkEntries } from "../../services/workService";
 import { subscribeTransactions } from "../../services/financeService";
+import { subscribeFixedCosts } from "../../services/fixedCostService";
 
 import { formatDateRange } from "../../utils/dateUtils";
 
@@ -14,6 +15,7 @@ export default function Dashboard() {
   const [visits, setVisits] = useState([]);
   const [work, setWork] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [fixedCosts, setFixedCosts] = useState([]);
 
   useEffect(() => {
     const unsubscribes = [
@@ -21,6 +23,7 @@ export default function Dashboard() {
       subscribeVisits(setVisits),
       subscribeWorkEntries(setWork),
       subscribeTransactions(setTransactions),
+      subscribeFixedCosts(setFixedCosts),
     ];
 
     return () => {
@@ -41,6 +44,11 @@ export default function Dashboard() {
       .filter((item) => item.type === "expense")
       .reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
+    const totalFixedCosts = fixedCosts.reduce(
+      (sum, item) => sum + Number(item.price || 0),
+      0
+    );
+
     return {
       activeFamilies: families.filter(
         (item) => item.active !== false
@@ -52,8 +60,12 @@ export default function Dashboard() {
       ),
 
       balance: visitIncome + cashIncome - expense,
+
+      fixedCosts: totalFixedCosts,
+
+      fixedCostsPerFamily: totalFixedCosts / 4,
     };
-  }, [families, visits, work, transactions]);
+  }, [families, visits, work, transactions, fixedCosts]);
 
   const upcomingVisits = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -77,7 +89,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
 
         <Card
           title="Aktivní rodiny"
@@ -97,6 +109,16 @@ export default function Dashboard() {
         <Card
           title="Pokladna"
           value={`${values.balance.toLocaleString("cs-CZ")} Kč`}
+        />
+
+        <Card
+          title="Fixní náklady"
+          value={`${values.fixedCosts.toLocaleString("cs-CZ")} Kč`}
+        />
+
+        <Card
+          title="Na rodinu (1/4)"
+          value={`${values.fixedCostsPerFamily.toLocaleString("cs-CZ")} Kč`}
         />
 
       </div>

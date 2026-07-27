@@ -7,6 +7,7 @@ import {
   Hammer,
   Flame,
   Wallet,
+  Receipt,
   BarChart3,
   Settings,
   History,
@@ -48,6 +49,11 @@ const menu = [
     title: "Finance",
     icon: Wallet,
     url: "/finance",
+  },
+  {
+    title: "Fixní náklady",
+    icon: Receipt,
+    url: "/fixed-costs",
   },
   {
     title: "Reporty",
