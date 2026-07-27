@@ -65,7 +65,7 @@ export default function VisitTable({ onEdit }) {
   return (
     <div className="overflow-x-auto rounded-xl bg-white shadow">
       {visits.length ? (
-        <table className="w-full min-w-[760px]">
+        <table className="w-full min-w-[950px]">
           <thead className="bg-slate-100 text-left">
             <tr>
               <th className="p-3">Rodina</th>
@@ -73,13 +73,14 @@ export default function VisitTable({ onEdit }) {
               <th className="p-3">Odjezd</th>
               <th className="p-3">Nocí</th>
               <th className="p-3">Cena</th>
+              <th className="p-3">Poznámka</th>
               <th className="p-3 text-center">Platba</th>
               <th className="p-3 text-center">Akce</th>
             </tr>
           </thead>
 
           <tbody>
-            {visits.map((visit) => (
+                        {visits.map((visit) => (
               <tr
                 key={visit.id}
                 className="border-t hover:bg-slate-50"
@@ -102,6 +103,16 @@ export default function VisitTable({ onEdit }) {
 
                 <td className="p-3 font-semibold">
                   {money(visit.total)}
+                </td>
+
+                <td className="max-w-xs p-3 text-sm text-slate-700">
+                  {visit.note?.trim()
+                    ? visit.note
+                    : (
+                      <span className="text-slate-400">
+                        —
+                      </span>
+                    )}
                 </td>
 
                 <td className="p-3 text-center">
@@ -138,7 +149,7 @@ export default function VisitTable({ onEdit }) {
                 </td>
               </tr>
             ))}
-          </tbody>
+                      </tbody>
         </table>
       ) : (
         <p className="p-8 text-center text-slate-500">
