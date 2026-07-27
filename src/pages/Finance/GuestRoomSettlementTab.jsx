@@ -4,6 +4,7 @@ import {
   updateGuestRoomReservation,
 } from "../../services/guestRoomService";
 import { getSettings } from "../../services/settingsService";
+import { formatDate } from "../../utils/dateUtils";
 import QRPaymentModal from "./QRPaymentModal";
 
 const money = (value) =>
@@ -118,11 +119,11 @@ export default function GuestRoomSettlementTab() {
                 </td>
 
                 <td className="p-3 text-center">
-                  {row.arrival}
+                  {formatDate(row.arrival)}
                 </td>
 
                 <td className="p-3 text-center">
-                  {row.departure}
+                  {formatDate(row.departure)}
                 </td>
 
                 <td className="p-3 text-center">

@@ -3,6 +3,7 @@ import { addVisit, updateVisit } from "../../services/visitService";
 import { getFamilies } from "../../services/familyService";
 import { getSettings } from "../../services/settingsService";
 import { addActivity } from "../../services/activityService";
+import { formatDateRange } from "../../utils/dateUtils";
 
 const empty = {
   familyId: "",
@@ -84,8 +85,7 @@ export default function VisitForm({
       [name]: value,
     }));
   }
-
-  async function submit(event) {
+    async function submit(event) {
     event.preventDefault();
 
     if (!form.familyId) {
@@ -114,13 +114,12 @@ export default function VisitForm({
       ...form,
       nights,
       pricePerNight: settings.pricePerNight,
-
       heatingPrice: heatingCost,
-
       total,
     };
 
     setSaving(true);
+
     try {
       if (selectedVisit) {
         await updateVisit(selectedVisit.id, data);
@@ -129,9 +128,13 @@ export default function VisitForm({
           type: "visit",
           icon: "✏️",
           title: "Návštěva upravena",
-          description: `${data.arrival} – ${data.departure}`,
+          description: formatDateRange(
+            data.arrival,
+            data.departure
+          ),
           user: data.family,
         });
+
       } else {
         await addVisit(data);
 
@@ -139,7 +142,10 @@ export default function VisitForm({
           type: "visit",
           icon: "📅",
           title: "Nová návštěva",
-          description: `${data.arrival} – ${data.departure}`,
+          description: formatDateRange(
+            data.arrival,
+            data.departure
+          ),
           user: data.family,
         });
       }
@@ -153,9 +159,7 @@ export default function VisitForm({
     } finally {
       setSaving(false);
     }
-  }
-
-  return (
+  }  return (
     <div className="rounded-xl bg-white p-6 shadow">
 
       <div className="mb-5 flex items-center justify-between">
@@ -383,6 +387,7 @@ export default function VisitForm({
     </div>
   );
 }
+
 function Info({ label, value }) {
   return (
     <label className="font-medium">

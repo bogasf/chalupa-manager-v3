@@ -5,6 +5,7 @@ import {
   updateVisit,
 } from "../../services/visitService";
 import { addActivity } from "../../services/activityService";
+import { formatDate } from "../../utils/dateUtils";
 
 const money = (value) =>
   `${Number(value || 0).toLocaleString("cs-CZ")} Kč`;
@@ -28,7 +29,9 @@ export default function VisitTable({ onEdit }) {
         type: "visit",
         icon: "🗑️",
         title: "Návštěva smazána",
-        description: `${visit.arrival} – ${visit.departure}`,
+        description: `${formatDate(visit.arrival)} – ${formatDate(
+          visit.departure
+        )}`,
         user: visit.family,
       });
     } catch (err) {
@@ -86,11 +89,11 @@ export default function VisitTable({ onEdit }) {
                 </td>
 
                 <td className="p-3">
-                  {visit.arrival}
+                  {formatDate(visit.arrival)}
                 </td>
 
                 <td className="p-3">
-                  {visit.departure}
+                  {formatDate(visit.departure)}
                 </td>
 
                 <td className="p-3">

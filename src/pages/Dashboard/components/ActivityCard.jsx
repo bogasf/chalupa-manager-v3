@@ -1,23 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { subscribeActivities } from "../../../services/activityService";
-
-function formatDate(timestamp) {
-  if (!timestamp) return "";
-
-  const date =
-    typeof timestamp?.toDate === "function"
-      ? timestamp.toDate()
-      : new Date(timestamp);
-
-  return date.toLocaleString("cs-CZ", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import { formatDateTime } from "../../../utils/dateUtils";
 
 export default function ActivityCard() {
   const [activities, setActivities] = useState([]);
@@ -31,9 +15,7 @@ export default function ActivityCard() {
 
   return (
     <section className="rounded-xl bg-white p-6 shadow">
-
       <div className="mb-5 flex items-center justify-between">
-
         <h2 className="text-xl font-semibold">
           🔔 Poslední aktivity
         </h2>
@@ -41,45 +23,34 @@ export default function ActivityCard() {
         <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">
           {activities.length}
         </span>
-
       </div>
 
       {activities.length === 0 ? (
-
         <p className="text-slate-500">
           Zatím nejsou žádné aktivity.
         </p>
-
       ) : (
-
         <>
           <div className="space-y-4">
-
             {latestActivities.map((activity) => (
-
               <div
                 key={activity.id}
                 className="rounded-lg border border-slate-200 p-4 transition hover:bg-slate-50"
               >
-
                 <div className="flex items-start gap-3">
-
                   <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-2xl">
                     {activity.icon || "📌"}
                   </div>
 
                   <div className="flex-1">
-
                     <div className="flex flex-wrap items-center justify-between gap-2">
-
                       <h3 className="font-semibold">
                         {activity.title}
                       </h3>
 
                       <span className="text-sm text-slate-500">
-                        {formatDate(activity.createdAt)}
+                        {formatDateTime(activity.createdAt)}
                       </span>
-
                     </div>
 
                     {activity.user && (
@@ -93,33 +64,23 @@ export default function ActivityCard() {
                         {activity.description}
                       </div>
                     )}
-
                   </div>
-
                 </div>
-
               </div>
-
             ))}
-
           </div>
 
           <div className="mt-6 flex justify-center">
-
             <button
               type="button"
               onClick={() => navigate("/activities")}
-              className="rounded-lg border border-slate-300 bg-white px-5 py-2 font-medium text-slate-700 transition hover:bg-slate-100 hover:border-blue-500 hover:text-blue-600"
+              className="rounded-lg border border-slate-300 bg-white px-5 py-2 font-medium text-slate-700 transition hover:border-blue-500 hover:bg-slate-100 hover:text-blue-600"
             >
               📜 Zobrazit všechny aktivity
             </button>
-
           </div>
-
         </>
-
       )}
-
     </section>
   );
 }

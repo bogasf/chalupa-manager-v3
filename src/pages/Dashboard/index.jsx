@@ -7,6 +7,8 @@ import { subscribeVisits } from "../../services/visitService";
 import { subscribeWorkEntries } from "../../services/workService";
 import { subscribeTransactions } from "../../services/financeService";
 
+import { formatDateRange } from "../../utils/dateUtils";
+
 export default function Dashboard() {
   const [families, setFamilies] = useState([]);
   const [visits, setVisits] = useState([]);
@@ -99,8 +101,6 @@ export default function Dashboard() {
 
       </div>
 
-      {/* NOVÁ KARTA AKTIVIT */}
-
       <ActivityCard />
 
       <section className="rounded-xl bg-white p-6 shadow">
@@ -125,7 +125,10 @@ export default function Dashboard() {
                 </span>
 
                 <span className="text-slate-600">
-                  {visit.arrival} — {visit.departure}
+                  {formatDateRange(
+                    visit.arrival,
+                    visit.departure
+                  )}
                 </span>
 
               </div>
