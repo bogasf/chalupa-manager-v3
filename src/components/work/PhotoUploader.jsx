@@ -8,18 +8,24 @@ export default function PhotoUploader({
   const inputRef = useRef(null);
 
   function addFiles(files) {
-    const imageFiles = Array.from(files).filter((file) =>
-      file.type.startsWith("image/")
+    if (!files || files.length === 0) return;
+
+    const imageFiles = Array.from(files).filter(
+      (file) =>
+        file.type.startsWith("image/") &&
+        file.size > 0
     );
 
-    const merged = [...photos, ...imageFiles].slice(0, maxFiles);
-
-    setPhotos(merged);
+    setPhotos((prev) => {
+      const merged = [...prev, ...imageFiles];
+      return merged.slice(0, maxFiles);
+    });
   }
 
   function remove(index) {
-    const updated = photos.filter((_, i) => i !== index);
-    setPhotos(updated);
+    setPhotos((prev) =>
+      prev.filter((_, i) => i !== index)
+    );
   }
 
   function handleDrop(e) {
@@ -47,51 +53,61 @@ export default function PhotoUploader({
           onClick={() => inputRef.current?.click()}
           className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
         >
-          📷 Vybrat fotografie
+          📷 Přidat fotografie
         </button>
 
         <p className="mt-3 text-sm text-slate-500">
-          nebo sem fotografie přetáhni
+          Vyber fotografie z telefonu nebo počítače
         </p>
 
         <input
           ref={inputRef}
           type="file"
           accept="image/*"
-          capture="environment"
           multiple
-          hidden
-          onChange={(e) => addFiles(e.target.files)}
+          className="hidden"
+          onChange={(e) => {
+            addFiles(e.target.files);
+
+            // dovolí znovu vybrat stejnou fotografii
+            e.target.value = "";
+          }}
         />
       </div>
 
       {photos.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {photos.map((photo, index) => (
-            <div
-              key={index}
-              className="relative overflow-hidden rounded-lg border"
-            >
-              <img
-                src={URL.createObjectURL(photo)}
-                alt=""
-                className="h-40 w-full object-cover"
-              />
+        <>
+          <div className="text-sm text-slate-600">
+            Vybráno {photos.length} / {maxFiles} fotografií
+          </div>
 
-              <button
-                type="button"
-                onClick={() => remove(index)}
-                className="absolute right-2 top-2 rounded-full bg-red-600 px-2 py-1 text-xs text-white"
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {photos.map((photo, index) => (
+              <div
+                key={`${photo.name}-${index}`}
+                className="relative overflow-hidden rounded-lg border bg-white shadow-sm"
               >
-                ✕
-              </button>
+                <img
+                  src={URL.createObjectURL(photo)}
+                  alt={photo.name}
+                  className="h-40 w-full object-cover"
+                />
 
-              <div className="truncate p-2 text-xs">
-                {photo.name}
+                <button
+                  type="button"
+                  onClick={() => remove(index)}
+                  className="absolute right-2 top-2 rounded-full bg-red-600 px-2 py-1 text-xs font-bold text-white hover:bg-red-700"
+                >
+                  ✕
+                </button>
+
+                <div className="truncate p-2 text-xs">
+                  {photo.name}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
