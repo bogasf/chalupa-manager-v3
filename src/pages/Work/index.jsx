@@ -79,7 +79,7 @@ export default function Work() {
       if (editing) {
         await updateWorkEntry(editing, {
           ...data,
-          photos: entries.find(e => e.id === editing)?.photos ?? [],
+          photos: entries.find((e) => e.id === editing)?.photos ?? [],
         });
 
         await addActivity({
@@ -161,7 +161,8 @@ export default function Work() {
       alert("Nepodařilo se smazat brigádu.");
     }
   }
-    return (
+
+  return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Brigády</h1>
@@ -295,7 +296,7 @@ export default function Work() {
             setPhotos={setPhotos}
           />
 
-          <div className="flex gap-3 md:col-span-2">
+          <div className="flex flex-col gap-3 sm:flex-row md:col-span-2">
             <button className="rounded bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700">
               {editing ? "Uložit změny" : "Přidat brigádu"}
             </button>
@@ -316,7 +317,72 @@ export default function Work() {
           </div>
         </form>
       </div>
-            <div className="overflow-x-auto rounded-xl bg-white shadow">
+            {/* MOBIL */}
+      <div className="space-y-4 md:hidden">
+        {entries.length ? (
+          entries.map((entry) => (
+            <div
+              key={entry.id}
+              className="rounded-xl border bg-white p-4 shadow"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-lg font-bold">
+                    🔨 {entry.work}
+                  </div>
+
+                  <div className="mt-2 space-y-1 text-sm text-slate-600">
+                    <div>📅 {entry.date}</div>
+                    <div>👨‍👩‍👧 {entry.family}</div>
+                    <div>⏱ {entry.hours} hod.</div>
+                  </div>
+                </div>
+
+                {entry.photos?.length > 0 && (
+                  <div className="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
+                    📷 {entry.photos.length}
+                  </div>
+                )}
+              </div>
+
+              {entry.note && (
+                <div className="mt-3 rounded-lg bg-slate-50 p-3 text-sm">
+                  📝 {entry.note}
+                </div>
+              )}
+
+              {entry.photos?.length > 0 && (
+                <div className="mt-4">
+                  <PhotoGallery photos={entry.photos} />
+                </div>
+              )}
+
+              <div className="mt-4 flex gap-3">
+                <button
+                  onClick={() => edit(entry)}
+                  className="flex-1 rounded-lg bg-blue-600 py-2 font-medium text-white hover:bg-blue-700"
+                >
+                  ✏️ Upravit
+                </button>
+
+                <button
+                  onClick={() => remove(entry)}
+                  className="flex-1 rounded-lg bg-red-600 py-2 font-medium text-white hover:bg-red-700"
+                >
+                  🗑 Smazat
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="rounded-xl bg-white p-8 text-center text-slate-500 shadow">
+            Zatím nejsou zapsané žádné brigády.
+          </div>
+        )}
+      </div>
+
+      {/* DESKTOP */}
+      <div className="hidden overflow-x-auto rounded-xl bg-white shadow md:block">
         {entries.length ? (
           <table className="w-full">
             <thead className="bg-slate-100">
@@ -359,15 +425,9 @@ export default function Work() {
 
                   <td className="p-3">
                     {entry.photos?.length ? (
-                      <div className="space-y-2">
-                        <div className="text-center font-semibold">
-                          📷 {entry.photos.length}
-                        </div>
-
-                        <PhotoGallery
-                          photos={entry.photos}
-                        />
-                      </div>
+                      <PhotoGallery
+                        photos={entry.photos}
+                      />
                     ) : (
                       <div className="text-center text-slate-400">
                         —
@@ -395,9 +455,9 @@ export default function Work() {
             </tbody>
           </table>
         ) : (
-          <p className="p-8 text-center text-slate-500">
+          <div className="p-8 text-center text-slate-500">
             Zatím nejsou zapsané žádné brigády.
-          </p>
+          </div>
         )}
       </div>
     </div>
