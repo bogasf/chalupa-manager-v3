@@ -8,6 +8,9 @@ import {
   updateWorkEntry,
 } from "../../services/workService";
 import { addActivity } from "../../services/activityService";
+import { uploadWorkPhotos } from "../../services/photoService";
+import PhotoUploader from "../../components/work/PhotoUploader";
+import PhotoGallery from "../../components/work/PhotoGallery";
 
 const blank = {
   familyId: "",
@@ -26,6 +29,7 @@ export default function Work() {
   const [entries, setEntries] = useState([]);
   const [form, setForm] = useState(blank);
   const [editing, setEditing] = useState(null);
+  const [photos, setPhotos] = useState([]);
 
   useEffect(() => {
     async function load() {
@@ -73,7 +77,10 @@ export default function Work() {
 
     try {
       if (editing) {
-        await updateWorkEntry(editing, data);
+        await updateWorkEntry(editing, {
+          ...data,
+          photos: entries.find(e => e.id === editing)?.photos ?? [],
+        });
 
         await addActivity({
           type: "work",
@@ -83,7 +90,21 @@ export default function Work() {
           user: data.family,
         });
       } else {
-        await addWorkEntry(data);
+        const docRef = await addWorkEntry({
+          ...data,
+          photos: [],
+        });
+
+        if (photos.length) {
+          const uploaded = await uploadWorkPhotos(
+            docRef.id,
+            photos
+          );
+
+          await updateWorkEntry(docRef.id, {
+            photos: uploaded,
+          });
+        }
 
         await addActivity({
           type: "work",
@@ -95,6 +116,7 @@ export default function Work() {
       }
 
       setForm(blank);
+      setPhotos([]);
       setEditing(null);
     } catch (err) {
       console.error(err);
@@ -115,6 +137,8 @@ export default function Work() {
       hours: entry.hours,
       note: entry.note ?? "",
     });
+
+    setPhotos([]);
   }
 
   async function remove(entry) {
@@ -137,8 +161,7 @@ export default function Work() {
       alert("Nepodařilo se smazat brigádu.");
     }
   }
-
-  return (
+    return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Brigády</h1>
@@ -267,6 +290,11 @@ export default function Work() {
             }
           />
 
+          <PhotoUploader
+            photos={photos}
+            setPhotos={setPhotos}
+          />
+
           <div className="flex gap-3 md:col-span-2">
             <button className="rounded bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700">
               {editing ? "Uložit změny" : "Přidat brigádu"}
@@ -278,6 +306,7 @@ export default function Work() {
                 onClick={() => {
                   setEditing(null);
                   setForm(blank);
+                  setPhotos([]);
                 }}
                 className="rounded border px-5 py-3"
               >
@@ -287,8 +316,7 @@ export default function Work() {
           </div>
         </form>
       </div>
-
-      <div className="overflow-x-auto rounded-xl bg-white shadow">
+            <div className="overflow-x-auto rounded-xl bg-white shadow">
         {entries.length ? (
           <table className="w-full">
             <thead className="bg-slate-100">
@@ -298,28 +326,56 @@ export default function Work() {
                 <th className="p-3 text-left">Práce</th>
                 <th className="p-3 text-right">Hodin</th>
                 <th className="p-3 text-left">Poznámka</th>
-                <th className="p-3">Akce</th>
+                <th className="p-3 text-center">📷</th>
+                <th className="p-3 text-center">Akce</th>
               </tr>
             </thead>
 
             <tbody>
               {entries.map((entry) => (
-                <tr key={entry.id} className="border-t">
-                  <td className="p-3">{entry.date}</td>
+                <tr
+                  key={entry.id}
+                  className="border-t align-top"
+                >
+                  <td className="p-3">
+                    {entry.date}
+                  </td>
 
                   <td className="p-3 font-medium">
                     {entry.family}
                   </td>
 
-                  <td className="p-3">{entry.work}</td>
+                  <td className="p-3">
+                    {entry.work}
+                  </td>
 
                   <td className="p-3 text-right">
                     {entry.hours}
                   </td>
 
-                  <td className="p-3">{entry.note}</td>
+                  <td className="p-3">
+                    {entry.note}
+                  </td>
 
-                  <td className="p-3 text-center">
+                  <td className="p-3">
+                    {entry.photos?.length ? (
+                      <div className="space-y-2">
+                        <div className="text-center font-semibold">
+                          📷 {entry.photos.length}
+                        </div>
+
+                        <PhotoGallery
+                          photos={entry.photos}
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-center text-slate-400">
+                        —
+                      </div>
+                    )}
+                  </td>
+
+                  <td className="p-3 text-center whitespace-nowrap">
                     <button
                       onClick={() => edit(entry)}
                       className="mr-3 text-blue-700 hover:underline"
