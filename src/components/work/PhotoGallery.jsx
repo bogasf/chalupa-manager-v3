@@ -1,42 +1,37 @@
 import { useState } from "react";
 import PhotoViewer from "./PhotoViewer";
 
-export default function PhotoGallery({
-  photos = [],
-}) {
-  const [selected, setSelected] = useState(null);
+export default function PhotoGallery({ photos = [] }) {
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
 
-  if (!photos.length) {
-    return (
-      <p className="text-sm text-slate-400">
-        Bez fotografií
-      </p>
-    );
-  }
+  if (!photos.length) return null;
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="flex flex-wrap gap-2">
         {photos.map((photo, index) => (
           <button
-            key={index}
+            key={photo.name || photo.url || index}
             type="button"
-            onClick={() => setSelected(photo)}
-            className="overflow-hidden rounded-lg border transition hover:shadow-lg"
+            onClick={() => setSelectedPhoto(photo)}
+            className="overflow-hidden rounded-lg border bg-white shadow-sm transition hover:shadow-md"
           >
             <img
               src={photo.url}
-              alt={photo.name}
-              className="h-32 w-full object-cover"
+              alt={`Foto ${index + 1}`}
+              className="h-20 w-20 object-cover sm:h-24 sm:w-24"
+              loading="lazy"
             />
           </button>
         ))}
       </div>
 
-      <PhotoViewer
-        photo={selected}
-        onClose={() => setSelected(null)}
-      />
+      {selectedPhoto && (
+        <PhotoViewer
+          photo={selectedPhoto}
+          onClose={() => setSelectedPhoto(null)}
+        />
+      )}
     </>
   );
 }
