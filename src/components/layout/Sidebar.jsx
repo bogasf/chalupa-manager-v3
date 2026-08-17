@@ -6,6 +6,7 @@ import {
   BedDouble,
   Hammer,
   Flame,
+  ShoppingCart,
   Wallet,
   Receipt,
   BarChart3,
@@ -44,6 +45,11 @@ const menu = [
     title: "Plyn",
     icon: Flame,
     url: "/gas",
+  },
+  {
+    title: "Nákupy",
+    icon: ShoppingCart,
+    url: "/purchases",
   },
   {
     title: "Finance",

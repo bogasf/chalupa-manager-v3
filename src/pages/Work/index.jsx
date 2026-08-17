@@ -318,16 +318,16 @@ export default function Work() {
         </form>
       </div>
             {/* MOBIL */}
-      <div className="space-y-4 md:hidden">
+      <div className="space-y-2 md:hidden">
         {entries.length ? (
           entries.map((entry) => (
             <div
               key={entry.id}
-              className="rounded-xl border bg-white p-4 shadow"
+              className="rounded-xl border bg-white p-3 shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-lg font-bold">
+                  <div className="text-base font-semibold">
                     🔨 {entry.work}
                   </div>
 
@@ -357,17 +357,17 @@ export default function Work() {
                 </div>
               )}
 
-              <div className="mt-4 flex gap-3">
+              <div className="mt-3 flex gap-2">
                 <button
                   onClick={() => edit(entry)}
-                  className="flex-1 rounded-lg bg-blue-600 py-2 font-medium text-white hover:bg-blue-700"
+                  className="flex-1 rounded-lg bg-blue-600 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
                 >
                   ✏️ Upravit
                 </button>
 
                 <button
                   onClick={() => remove(entry)}
-                  className="flex-1 rounded-lg bg-red-600 py-2 font-medium text-white hover:bg-red-700"
+                  className="flex-1 rounded-lg bg-red-600 py-1.5 text-sm font-medium text-white hover:bg-red-700"
                 >
                   🗑 Smazat
                 </button>

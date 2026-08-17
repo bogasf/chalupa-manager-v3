@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getFamilies } from "../../services/familyService";
 import { subscribeVisits } from "../../services/visitService";
 import { subscribeWorkEntries } from "../../services/workService";
+import { subscribePurchases } from "../../services/purchaseService";
 import { getSettings } from "../../services/settingsService";
 import QRPaymentModal from "./QRPaymentModal";
 
@@ -12,6 +13,7 @@ export default function SettlementTab() {
   const [families, setFamilies] = useState([]);
   const [visits, setVisits] = useState([]);
   const [workEntries, setWorkEntries] = useState([]);
+  const [purchases, setPurchases] = useState([]);
 
   const [settings, setSettings] = useState({
     workHourRate: 150,
@@ -40,10 +42,12 @@ export default function SettlementTab() {
 
     const unsubscribeVisits = subscribeVisits(setVisits);
     const unsubscribeWork = subscribeWorkEntries(setWorkEntries);
+    const unsubscribePurchases = subscribePurchases(setPurchases);
 
     return () => {
       unsubscribeVisits();
       unsubscribeWork();
+      unsubscribePurchases();
     };
   }, []);
 
@@ -55,7 +59,7 @@ export default function SettlementTab() {
           (item) => item.familyId === family.id
         );
 
-        // ✅ pouze nezaplacené návštěvy
+        // Pouze nezaplacené návštěvy
         const unpaidVisits = familyVisits.filter(
           (item) => item.paid !== true
         );
@@ -77,24 +81,43 @@ export default function SettlementTab() {
         const workCredit =
           hours * Number(settings.workHourRate || 0);
 
+        // Nákupy rodiny = kredit
+        const familyPurchases = purchases.filter(
+          (item) => item.familyId === family.id
+        );
+
+        const purchaseCredit = familyPurchases.reduce(
+          (sum, item) => sum + Number(item.amount || 0),
+          0
+        );
+
+        // Výsledné vyúčtování:
+        // návštěvy - brigády - nákupy
+        const balance =
+          visitTotal - workCredit - purchaseCredit;
+
         return {
           id: family.id,
           family: family.name,
           visitTotal,
           workCredit,
-          balance: visitTotal - workCredit,
+          purchaseCredit,
+          balance,
         };
       });
-  }, [families, visits, workEntries, settings]);
+  }, [
+    families,
+    visits,
+    workEntries,
+    purchases,
+    settings,
+  ]);
 
   return (
     <>
       <div className="overflow-x-auto rounded-xl bg-white shadow">
-
         <table className="w-full">
-
           <thead className="bg-slate-100">
-
             <tr>
               <th className="p-3 text-left">
                 Rodina
@@ -109,6 +132,10 @@ export default function SettlementTab() {
               </th>
 
               <th className="p-3 text-right">
+                Nákupy
+              </th>
+
+              <th className="p-3 text-right">
                 K úhradě
               </th>
 
@@ -116,18 +143,14 @@ export default function SettlementTab() {
                 QR
               </th>
             </tr>
-
           </thead>
 
           <tbody>
-
             {rows.map((row) => (
-
               <tr
                 key={row.id}
                 className="border-t hover:bg-slate-50"
               >
-
                 <td className="p-3 font-medium">
                   {row.family}
                 </td>
@@ -140,8 +163,11 @@ export default function SettlementTab() {
                   - {money(row.workCredit)}
                 </td>
 
-                <td className="p-3 text-right text-lg font-bold">
+                <td className="p-3 text-right text-emerald-700">
+                  - {money(row.purchaseCredit)}
+                </td>
 
+                <td className="p-3 text-right text-lg font-bold">
                   {row.balance > 0 ? (
                     <span className="text-red-600">
                       {money(row.balance)}
@@ -151,14 +177,12 @@ export default function SettlementTab() {
                       {money(row.balance)}
                     </span>
                   )}
-
                 </td>
 
                 <td className="p-3 text-center">
-
                   {row.balance > 0 ? (
-
                     <button
+                      type="button"
                       onClick={() => {
                         setSelectedRow(row);
                         setQrOpen(true);
@@ -167,25 +191,16 @@ export default function SettlementTab() {
                     >
                       📱 QR
                     </button>
-
                   ) : (
-
                     <span className="text-slate-400">
                       —
                     </span>
-
                   )}
-
                 </td>
-
               </tr>
-
             ))}
-
           </tbody>
-
         </table>
-
       </div>
 
       <QRPaymentModal
