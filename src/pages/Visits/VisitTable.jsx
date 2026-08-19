@@ -18,12 +18,6 @@ export default function VisitTable({ onEdit }) {
     return subscribeVisits(setVisits);
   }, []);
 
-  /*
-   * Návštěva je považována za minulou,
-   * pokud její datum odjezdu je před dnešním dnem.
-   *
-   * Dnešní návštěva tedy zůstává mezi aktivními.
-   */
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -32,6 +26,11 @@ export default function VisitTable({ onEdit }) {
     const history = [];
 
     visits.forEach((visit) => {
+      // Zaplacené návštěvy se v evidenci nezobrazují
+      if (visit.paid) {
+        return;
+      }
+
       const departure = new Date(visit.departure);
       departure.setHours(0, 0, 0, 0);
 
@@ -42,15 +41,13 @@ export default function VisitTable({ onEdit }) {
       }
     });
 
-    // Aktivní a budoucí návštěvy:
-    // nejbližší příjezd nahoře
+    // Nejbližší příjezdy nahoře
     active.sort(
       (a, b) =>
         new Date(a.arrival) - new Date(b.arrival)
     );
 
-    // Historie:
-    // nejnovější ukončené návštěvy nahoře
+    // Nejnovější ukončené návštěvy nahoře
     history.sort(
       (a, b) =>
         new Date(b.departure) - new Date(a.departure)
@@ -115,7 +112,7 @@ export default function VisitTable({ onEdit }) {
     if (!list.length) {
       return (
         <p className="p-8 text-center text-slate-500">
-          Žádné návštěvy.
+          Žádné nezaplacené návštěvy.
         </p>
       );
     }
@@ -179,15 +176,9 @@ export default function VisitTable({ onEdit }) {
                 <td className="p-3 text-center">
                   <button
                     onClick={() => togglePaid(visit)}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                      visit.paid
-                        ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                        : "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                    }`}
+                    className="rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-200"
                   >
-                    {visit.paid
-                      ? "🟢 Zaplaceno"
-                      : "🟠 Nezaplaceno"}
+                    🟠 Nezaplaceno
                   </button>
                 </td>
 
@@ -219,12 +210,12 @@ export default function VisitTable({ onEdit }) {
   return (
     <div className="space-y-4">
 
-      {/* AKTIVNÍ A NADCHÁZEJÍCÍ */}
+      {/* NEZAPLACENÉ AKTIVNÍ A NADCHÁZEJÍCÍ */}
       <div className="overflow-hidden rounded-xl bg-white shadow">
         <div className="flex items-center justify-between border-b bg-white px-5 py-4">
           <div>
             <h2 className="text-lg font-bold text-slate-800">
-              🟢 Aktivní a nadcházející návštěvy
+              🟠 Nezaplacené návštěvy
             </h2>
 
             <p className="text-sm text-slate-500">
@@ -239,7 +230,7 @@ export default function VisitTable({ onEdit }) {
         {renderTable(activeVisits)}
       </div>
 
-      {/* HISTORIE */}
+      {/* HISTORIE NEZAPLACENÝCH */}
       {historyVisits.length > 0 && (
         <div className="overflow-hidden rounded-xl bg-white shadow">
           <button
@@ -250,7 +241,7 @@ export default function VisitTable({ onEdit }) {
           >
             <div>
               <h2 className="text-lg font-bold text-slate-700">
-                📁 Historie návštěv
+                📁 Historie nezaplacených návštěv
               </h2>
 
               <p className="text-sm text-slate-500">
@@ -273,6 +264,23 @@ export default function VisitTable({ onEdit }) {
           )}
         </div>
       )}
+
+      {/* VŠECHNY NÁVŠTĚVY ZAPLACENÉ */}
+      {!activeVisits.length &&
+        !historyVisits.length &&
+        visits.length > 0 && (
+          <div className="rounded-xl bg-white p-8 text-center shadow">
+            <div className="text-3xl">✅</div>
+
+            <p className="mt-2 font-semibold text-slate-700">
+              Všechny návštěvy jsou zaplacené.
+            </p>
+
+            <p className="mt-1 text-sm text-slate-500">
+              V evidenci nejsou žádné nezaplacené pobyty.
+            </p>
+          </div>
+        )}
 
       {/* ŽÁDNÉ NÁVŠTĚVY */}
       {!visits.length && (
