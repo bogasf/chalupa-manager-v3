@@ -13,6 +13,7 @@ const money = (value) =>
 export default function VisitTable({ onEdit }) {
   const [visits, setVisits] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [showPaid, setShowPaid] = useState(false);
 
   useEffect(() => {
     return subscribeVisits(setVisits);
@@ -21,13 +22,19 @@ export default function VisitTable({ onEdit }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const { activeVisits, historyVisits } = useMemo(() => {
+  const {
+    activeVisits,
+    historyVisits,
+    paidVisits,
+  } = useMemo(() => {
     const active = [];
     const history = [];
+    const paid = [];
 
     visits.forEach((visit) => {
-      // Zaplacené návštěvy se v evidenci nezobrazují
+      // Zaplacené návštěvy patří do samostatné sekce
       if (visit.paid) {
+        paid.push(visit);
         return;
       }
 
@@ -41,23 +48,40 @@ export default function VisitTable({ onEdit }) {
       }
     });
 
-    // Nejbližší příjezdy nahoře
+    // Aktivní a budoucí – nejbližší příjezd nahoře
     active.sort(
       (a, b) =>
         new Date(a.arrival) - new Date(b.arrival)
     );
 
-    // Nejnovější ukončené návštěvy nahoře
+    // Historie – nejnovější odjezd nahoře
     history.sort(
       (a, b) =>
         new Date(b.departure) - new Date(a.departure)
     );
 
+    // Zaplacené – nejnovější návštěvy nahoře
+    paid.sort(
+      (a, b) =>
+        new Date(b.arrival) - new Date(a.arrival)
+    );
+
     return {
       activeVisits: active,
       historyVisits: history,
+      paidVisits: paid,
     };
   }, [visits]);
+
+  const unpaidTotal = [...activeVisits, ...historyVisits].reduce(
+    (sum, visit) => sum + Number(visit.total || 0),
+    0
+  );
+
+  const paidTotal = paidVisits.reduce(
+    (sum, visit) => sum + Number(visit.total || 0),
+    0
+  );
 
   async function remove(visit) {
     if (!window.confirm("Opravdu chcete návštěvu smazat?")) {
@@ -112,7 +136,7 @@ export default function VisitTable({ onEdit }) {
     if (!list.length) {
       return (
         <p className="p-8 text-center text-slate-500">
-          Žádné nezaplacené návštěvy.
+          Žádné návštěvy.
         </p>
       );
     }
@@ -174,12 +198,21 @@ export default function VisitTable({ onEdit }) {
                 </td>
 
                 <td className="p-3 text-center">
-                  <button
-                    onClick={() => togglePaid(visit)}
-                    className="rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-200"
-                  >
-                    🟠 Nezaplaceno
-                  </button>
+                  {visit.paid ? (
+                    <button
+                      onClick={() => togglePaid(visit)}
+                      className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-200"
+                    >
+                      🟢 Zaplaceno
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => togglePaid(visit)}
+                      className="rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-200"
+                    >
+                      🟠 Nezaplaceno
+                    </button>
+                  )}
                 </td>
 
                 <td className="p-3">
@@ -210,9 +243,11 @@ export default function VisitTable({ onEdit }) {
   return (
     <div className="space-y-4">
 
-      {/* NEZAPLACENÉ AKTIVNÍ A NADCHÁZEJÍCÍ */}
+      {/* NEZAPLACENÉ */}
       <div className="overflow-hidden rounded-xl bg-white shadow">
+
         <div className="flex items-center justify-between border-b bg-white px-5 py-4">
+
           <div>
             <h2 className="text-lg font-bold text-slate-800">
               🟠 Nezaplacené návštěvy
@@ -225,20 +260,28 @@ export default function VisitTable({ onEdit }) {
                 : "návštěv"}
             </p>
           </div>
+
+          <div className="text-lg font-bold text-amber-600">
+            {money(unpaidTotal)}
+          </div>
+
         </div>
 
         {renderTable(activeVisits)}
+
       </div>
 
       {/* HISTORIE NEZAPLACENÝCH */}
       {historyVisits.length > 0 && (
         <div className="overflow-hidden rounded-xl bg-white shadow">
+
           <button
             onClick={() =>
               setShowHistory((prev) => !prev)
             }
             className="flex w-full items-center justify-between bg-slate-100 px-5 py-4 text-left transition hover:bg-slate-200"
           >
+
             <div>
               <h2 className="text-lg font-bold text-slate-700">
                 📁 Historie nezaplacených návštěv
@@ -255,6 +298,7 @@ export default function VisitTable({ onEdit }) {
             <span className="text-xl">
               {showHistory ? "▲" : "▼"}
             </span>
+
           </button>
 
           {showHistory && (
@@ -262,23 +306,75 @@ export default function VisitTable({ onEdit }) {
               {renderTable(historyVisits)}
             </div>
           )}
+
         </div>
       )}
 
-      {/* VŠECHNY NÁVŠTĚVY ZAPLACENÉ */}
+      {/* ZAPLACENÉ */}
+      {paidVisits.length > 0 && (
+        <div className="overflow-hidden rounded-xl bg-white shadow">
+
+          <button
+            onClick={() =>
+              setShowPaid((prev) => !prev)
+            }
+            className="flex w-full items-center justify-between bg-emerald-50 px-5 py-4 text-left transition hover:bg-emerald-100"
+          >
+
+            <div>
+              <h2 className="text-lg font-bold text-emerald-800">
+                🟢 Zaplacené návštěvy
+              </h2>
+
+              <p className="text-sm text-emerald-700">
+                {paidVisits.length}{" "}
+                {paidVisits.length === 1
+                  ? "návštěva"
+                  : "návštěv"}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4">
+
+              <span className="font-bold text-emerald-700">
+                {money(paidTotal)}
+              </span>
+
+              <span className="text-xl">
+                {showPaid ? "▲" : "▼"}
+              </span>
+
+            </div>
+
+          </button>
+
+          {showPaid && (
+            <div>
+              {renderTable(paidVisits)}
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* VŠE ZAPLACENO */}
       {!activeVisits.length &&
         !historyVisits.length &&
-        visits.length > 0 && (
-          <div className="rounded-xl bg-white p-8 text-center shadow">
-            <div className="text-3xl">✅</div>
+        paidVisits.length > 0 && (
+          <div className="rounded-xl bg-emerald-50 p-6 text-center shadow">
 
-            <p className="mt-2 font-semibold text-slate-700">
+            <div className="text-3xl">
+              ✅
+            </div>
+
+            <p className="mt-2 font-semibold text-emerald-800">
               Všechny návštěvy jsou zaplacené.
             </p>
 
-            <p className="mt-1 text-sm text-slate-500">
-              V evidenci nejsou žádné nezaplacené pobyty.
+            <p className="mt-1 text-sm text-emerald-700">
+              Celkem zaplaceno: {money(paidTotal)}
             </p>
+
           </div>
         )}
 
@@ -288,6 +384,7 @@ export default function VisitTable({ onEdit }) {
           Zatím nejsou evidované žádné návštěvy.
         </div>
       )}
+
     </div>
   );
 }
