@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   subscribeVisits,
   deleteVisit,
@@ -12,10 +12,55 @@ const money = (value) =>
 
 export default function VisitTable({ onEdit }) {
   const [visits, setVisits] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     return subscribeVisits(setVisits);
   }, []);
+
+  /*
+   * Návštěva je považována za minulou,
+   * pokud její datum odjezdu je před dnešním dnem.
+   *
+   * Dnešní návštěva tedy zůstává mezi aktivními.
+   */
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const { activeVisits, historyVisits } = useMemo(() => {
+    const active = [];
+    const history = [];
+
+    visits.forEach((visit) => {
+      const departure = new Date(visit.departure);
+      departure.setHours(0, 0, 0, 0);
+
+      if (departure < today) {
+        history.push(visit);
+      } else {
+        active.push(visit);
+      }
+    });
+
+    // Aktivní a budoucí návštěvy:
+    // nejbližší příjezd nahoře
+    active.sort(
+      (a, b) =>
+        new Date(a.arrival) - new Date(b.arrival)
+    );
+
+    // Historie:
+    // nejnovější ukončené návštěvy nahoře
+    history.sort(
+      (a, b) =>
+        new Date(b.departure) - new Date(a.departure)
+    );
+
+    return {
+      activeVisits: active,
+      historyVisits: history,
+    };
+  }, [visits]);
 
   async function remove(visit) {
     if (!window.confirm("Opravdu chcete návštěvu smazat?")) {
@@ -29,9 +74,9 @@ export default function VisitTable({ onEdit }) {
         type: "visit",
         icon: "🗑️",
         title: "Návštěva smazána",
-        description: `${formatDate(visit.arrival)} – ${formatDate(
-          visit.departure
-        )}`,
+        description: `${formatDate(
+          visit.arrival
+        )} – ${formatDate(visit.departure)}`,
         user: visit.family,
       });
     } catch (err) {
@@ -46,13 +91,17 @@ export default function VisitTable({ onEdit }) {
 
       await updateVisit(visit.id, {
         paid,
-        paidAt: paid ? new Date().toISOString() : null,
+        paidAt: paid
+          ? new Date().toISOString()
+          : null,
       });
 
       await addActivity({
         type: "payment",
         icon: paid ? "💰" : "❌",
-        title: paid ? "Pobyt zaplacen" : "Platba zrušena",
+        title: paid
+          ? "Pobyt zaplacen"
+          : "Platba zrušena",
         description: `${money(visit.total)}`,
         user: visit.family,
       });
@@ -62,9 +111,17 @@ export default function VisitTable({ onEdit }) {
     }
   }
 
-  return (
-    <div className="overflow-x-auto rounded-xl bg-white shadow">
-      {visits.length ? (
+  function renderTable(list) {
+    if (!list.length) {
+      return (
+        <p className="p-8 text-center text-slate-500">
+          Žádné návštěvy.
+        </p>
+      );
+    }
+
+    return (
+      <div className="overflow-x-auto">
         <table className="w-full min-w-[950px]">
           <thead className="bg-slate-100 text-left">
             <tr>
@@ -74,13 +131,17 @@ export default function VisitTable({ onEdit }) {
               <th className="p-3">Nocí</th>
               <th className="p-3">Cena</th>
               <th className="p-3">Poznámka</th>
-              <th className="p-3 text-center">Platba</th>
-              <th className="p-3 text-center">Akce</th>
+              <th className="p-3 text-center">
+                Platba
+              </th>
+              <th className="p-3 text-center">
+                Akce
+              </th>
             </tr>
           </thead>
 
           <tbody>
-                        {visits.map((visit) => (
+            {list.map((visit) => (
               <tr
                 key={visit.id}
                 className="border-t hover:bg-slate-50"
@@ -106,13 +167,13 @@ export default function VisitTable({ onEdit }) {
                 </td>
 
                 <td className="max-w-xs p-3 text-sm text-slate-700">
-                  {visit.note?.trim()
-                    ? visit.note
-                    : (
-                      <span className="text-slate-400">
-                        —
-                      </span>
-                    )}
+                  {visit.note?.trim() ? (
+                    visit.note
+                  ) : (
+                    <span className="text-slate-400">
+                      —
+                    </span>
+                  )}
                 </td>
 
                 <td className="p-3 text-center">
@@ -149,12 +210,75 @@ export default function VisitTable({ onEdit }) {
                 </td>
               </tr>
             ))}
-                      </tbody>
+          </tbody>
         </table>
-      ) : (
-        <p className="p-8 text-center text-slate-500">
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+
+      {/* AKTIVNÍ A NADCHÁZEJÍCÍ */}
+      <div className="overflow-hidden rounded-xl bg-white shadow">
+        <div className="flex items-center justify-between border-b bg-white px-5 py-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">
+              🟢 Aktivní a nadcházející návštěvy
+            </h2>
+
+            <p className="text-sm text-slate-500">
+              {activeVisits.length}{" "}
+              {activeVisits.length === 1
+                ? "návštěva"
+                : "návštěv"}
+            </p>
+          </div>
+        </div>
+
+        {renderTable(activeVisits)}
+      </div>
+
+      {/* HISTORIE */}
+      {historyVisits.length > 0 && (
+        <div className="overflow-hidden rounded-xl bg-white shadow">
+          <button
+            onClick={() =>
+              setShowHistory((prev) => !prev)
+            }
+            className="flex w-full items-center justify-between bg-slate-100 px-5 py-4 text-left transition hover:bg-slate-200"
+          >
+            <div>
+              <h2 className="text-lg font-bold text-slate-700">
+                📁 Historie návštěv
+              </h2>
+
+              <p className="text-sm text-slate-500">
+                {historyVisits.length}{" "}
+                {historyVisits.length === 1
+                  ? "ukončená návštěva"
+                  : "ukončených návštěv"}
+              </p>
+            </div>
+
+            <span className="text-xl">
+              {showHistory ? "▲" : "▼"}
+            </span>
+          </button>
+
+          {showHistory && (
+            <div>
+              {renderTable(historyVisits)}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ŽÁDNÉ NÁVŠTĚVY */}
+      {!visits.length && (
+        <div className="rounded-xl bg-white p-8 text-center text-slate-500 shadow">
           Zatím nejsou evidované žádné návštěvy.
-        </p>
+        </div>
       )}
     </div>
   );
