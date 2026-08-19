@@ -1,6 +1,6 @@
 import { useState } from "react";
-import InvestmentForm from "../../components/Investments/InvestmentForm";
-import InvestmentTable from "../../components/Investments/InvestmentTable";
+import InvestmentForm from "../../components/investments/InvestmentForm";
+import InvestmentTable from "../../components/investments/InvestmentTable";
 
 export default function Investments() {
   const [selectedInvestment, setSelectedInvestment] = useState(null);
@@ -23,26 +23,28 @@ export default function Investments() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">
-          🔧 Investice
-        </h1>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">
+            🔧 Investice
+          </h1>
 
-        <p className="text-slate-500">
-          Evidence investic a oprav chalupy.
-        </p>
-      </div>
+          <p className="text-slate-500">
+            Evidence investic a oprav chalupy.
+          </p>
+        </div>
 
-      <div className="flex justify-end">
-        <button
-          onClick={() => {
-            setSelectedInvestment(null);
-            setShowForm(true);
-          }}
-          className="rounded-lg bg-blue-600 px-5 py-3 font-medium text-white hover:bg-blue-700"
-        >
-          ➕ Přidat investici
-        </button>
+        {!showForm && (
+          <button
+            onClick={() => {
+              setSelectedInvestment(null);
+              setShowForm(true);
+            }}
+            className="rounded-lg bg-blue-600 px-5 py-3 font-medium text-white hover:bg-blue-700"
+          >
+            ➕ Přidat investici
+          </button>
+        )}
       </div>
 
       {showForm && (
@@ -53,9 +55,7 @@ export default function Investments() {
         />
       )}
 
-      <InvestmentTable
-        onEdit={handleEdit}
-      />
+      <InvestmentTable onEdit={handleEdit} />
     </div>
   );
 }
