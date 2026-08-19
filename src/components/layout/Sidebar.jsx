@@ -12,6 +12,7 @@ import {
   BarChart3,
   Settings,
   History,
+  Wrench,
   X,
 } from "lucide-react";
 
@@ -60,6 +61,11 @@ const menu = [
     title: "Fixní náklady",
     icon: Receipt,
     url: "/fixed-costs",
+  },
+  {
+    title: "Investice",
+    icon: Wrench,
+    url: "/investments",
   },
   {
     title: "Reporty",

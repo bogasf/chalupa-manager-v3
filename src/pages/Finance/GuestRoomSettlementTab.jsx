@@ -67,7 +67,7 @@ export default function GuestRoomSettlementTab() {
             </h2>
 
             <p className="text-slate-500">
-              Přehled plateb rezervací
+              Přehled plateb rezervací podle osob
             </p>
           </div>
 
@@ -84,13 +84,14 @@ export default function GuestRoomSettlementTab() {
       </div>
 
       <div className="overflow-x-auto rounded-xl bg-white shadow">
-        <table className="w-full">
+        <table className="w-full min-w-[900px]">
           <thead className="bg-slate-100">
             <tr>
               <th className="p-3 text-left">Host</th>
               <th className="p-3">Příjezd</th>
               <th className="p-3">Odjezd</th>
-              <th className="p-3">Osoby</th>
+              <th className="p-3 text-center">Osoby</th>
+              <th className="p-3 text-center">Nocí</th>
               <th className="p-3 text-right">Cena</th>
               <th className="p-3 text-center">Stav</th>
               <th className="p-3 text-center">QR</th>
@@ -101,7 +102,7 @@ export default function GuestRoomSettlementTab() {
             {rows.length === 0 && (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={9}
                   className="p-6 text-center text-slate-500"
                 >
                   Zatím nejsou žádné rezervace.
@@ -109,63 +110,86 @@ export default function GuestRoomSettlementTab() {
               </tr>
             )}
 
-            {rows.map((row) => (
-              <tr
-                key={row.id}
-                className="border-t hover:bg-slate-50"
-              >
-                <td className="p-3 font-medium">
-                  {row.guestName}
-                </td>
+            {rows.map((row) => {
+              const persons = Number(row.persons || 1);
+              const nights = Number(row.nights || 0);
+              const pricePerPerson = Number(
+                row.pricePerPersonPerNight ??
+                  row.pricePerNight ??
+                  settings.guestRoomPrice ??
+                  100
+              );
 
-                <td className="p-3 text-center">
-                  {formatDate(row.arrival)}
-                </td>
+              const accommodation = Number(
+                row.accommodation ??
+                  persons * nights * pricePerPerson
+              );
 
-                <td className="p-3 text-center">
-                  {formatDate(row.departure)}
-                </td>
+              return (
+                <tr
+                  key={row.id}
+                  className="border-t hover:bg-slate-50"
+                >
+                  <td className="p-3 font-medium">
+                    {row.guestName}
+                  </td>
 
-                <td className="p-3 text-center">
-                  {row.persons}
-                </td>
+                  <td className="p-3 text-center">
+                    {formatDate(row.arrival)}
+                  </td>
 
-                <td className="p-3 text-right font-bold">
-                  {money(row.total)}
-                </td>
+                  <td className="p-3 text-center">
+                    {formatDate(row.departure)}
+                  </td>
 
-                <td className="p-3 text-center">
-                  <button
-                    onClick={() => togglePaid(row)}
-                    className={`rounded-lg px-4 py-2 text-white ${
-                      row.paid
-                        ? "bg-emerald-600 hover:bg-emerald-700"
-                        : "bg-orange-500 hover:bg-orange-600"
-                    }`}
-                  >
-                    {row.paid
-                      ? "✅ Zaplaceno"
-                      : "🟠 Nezaplaceno"}
-                  </button>
-                </td>
+                  <td className="p-3 text-center">
+                    {persons}
+                  </td>
 
-                <td className="p-3 text-center">
-                  {!row.paid ? (
+                  <td className="p-3 text-center">
+                    {nights}
+                  </td>
+
+                  <td className="p-3 text-right font-bold">
+                    <div>{money(row.total)}</div>
+                    <div className="text-xs font-normal text-slate-500">
+                      {persons} × {nights} × {money(pricePerPerson)}
+                    </div>
+                  </td>
+
+                  <td className="p-3 text-center">
                     <button
-                      onClick={() => {
-                        setSelectedReservation(row);
-                        setQrOpen(true);
-                      }}
-                      className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                      onClick={() => togglePaid(row)}
+                      className={`rounded-lg px-4 py-2 text-white ${
+                        row.paid
+                          ? "bg-emerald-600 hover:bg-emerald-700"
+                          : "bg-orange-500 hover:bg-orange-600"
+                      }`}
                     >
-                      📱 QR
+                      {row.paid
+                        ? "✅ Zaplaceno"
+                        : "🟠 Nezaplaceno"}
                     </button>
-                  ) : (
-                    <span className="text-slate-400">—</span>
-                  )}
-                </td>
-              </tr>
-            ))}
+                  </td>
+
+                  <td className="p-3 text-center">
+                    {!row.paid ? (
+                      <button
+                        onClick={() => {
+                          setSelectedReservation(row);
+                          setQrOpen(true);
+                        }}
+                        className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                      >
+                        📱 QR
+                      </button>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

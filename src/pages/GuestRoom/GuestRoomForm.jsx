@@ -14,7 +14,6 @@ function calculateNights(arrival, departure) {
 
   const start = new Date(arrival);
   const end = new Date(departure);
-
   const diff = end - start;
 
   if (diff <= 0) return 0;
@@ -38,7 +37,6 @@ export default function GuestRoomForm({
 
   const [form, setForm] = useState({
     guestName: "",
-    phone: "",
     arrival: today,
     departure: today,
     persons: 1,
@@ -73,18 +71,16 @@ export default function GuestRoomForm({
     if (selectedReservation) {
       setForm({
         guestName: selectedReservation.guestName || "",
-        phone: selectedReservation.phone || "",
         arrival: selectedReservation.arrival || today,
         departure: selectedReservation.departure || today,
-        persons: selectedReservation.persons || 1,
+        persons: Number(selectedReservation.persons || 1),
         heating: selectedReservation.heating || false,
         note: selectedReservation.note || "",
       });
     } else {
       setForm({
-        guestName: "",
-        phone: "",
-        arrival: today,
+            guestName: "",
+            arrival: today,
         departure: today,
         persons: 1,
         heating: false,
@@ -113,29 +109,22 @@ export default function GuestRoomForm({
     return calculateNights(form.arrival, form.departure);
   }, [form.arrival, form.departure]);
 
-  // Cena za noc
-  const roomPrice = Number(
-    settings.guestRoomPrice ?? 100
-  );
+  // Cena za 1 osobu a 1 noc
+  const roomPrice = Number(settings.guestRoomPrice ?? 100);
 
   // Cena topení za den
-  const heatingPerDay = Number(
-    settings.guestRoomHeating ?? 100
-  );
+  const heatingPerDay = Number(settings.guestRoomHeating ?? 100);
 
-  // Cena ubytování
+  // Ubytování = počet osob × počet nocí × cena za osobu/noc
   const accommodation = useMemo(() => {
-    return nights * roomPrice;
-  }, [nights, roomPrice]);
+    return nights * Number(form.persons || 0) * roomPrice;
+  }, [nights, form.persons, roomPrice]);
 
   // Cena topení za celý pobyt
   const heatingPrice = useMemo(() => {
-    return form.heating
-      ? nights * heatingPerDay
-      : 0;
+    return form.heating ? nights * heatingPerDay : 0;
   }, [form.heating, nights, heatingPerDay]);
 
-  // Celková cena
   const total = useMemo(() => {
     return accommodation + heatingPrice;
   }, [accommodation, heatingPrice]);
@@ -149,15 +138,21 @@ export default function GuestRoomForm({
         type === "checkbox"
           ? checked
           : name === "persons"
-          ? Number(value)
+          ? Math.max(1, Number(value) || 1)
           : value,
     }));
   }
-    async function handleSubmit(e) {
+
+  async function handleSubmit(e) {
     e.preventDefault();
 
     if (!form.guestName.trim()) {
       alert("Zadej jméno hosta.");
+      return;
+    }
+
+    if (Number(form.persons) < 1) {
+      alert("Počet osob musí být alespoň 1.");
       return;
     }
 
@@ -172,8 +167,11 @@ export default function GuestRoomForm({
 
     const reservation = {
       ...form,
+      persons: Number(form.persons),
       nights,
+      pricePerPersonPerNight: roomPrice,
       pricePerNight: roomPrice,
+      accommodation,
       heatingPrice,
       total,
       price: total,
@@ -186,15 +184,12 @@ export default function GuestRoomForm({
           reservation
         );
       } else {
-        await addGuestRoomReservation(
-          reservation
-        );
+        await addGuestRoomReservation(reservation);
       }
 
       setForm({
-        guestName: "",
-        phone: "",
-        arrival: today,
+            guestName: "",
+            arrival: today,
         departure: today,
         persons: 1,
         heating: false,
@@ -213,9 +208,7 @@ export default function GuestRoomForm({
       onSubmit={handleSubmit}
       className="space-y-6 rounded-xl bg-white p-6 shadow"
     >
-
       <div className="grid gap-6 md:grid-cols-2">
-
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">
             Jméno hosta *
@@ -234,16 +227,18 @@ export default function GuestRoomForm({
 
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700">
-            Telefon
+            Počet osob *
           </label>
 
           <input
-            type="text"
-            name="phone"
-            value={form.phone}
+            type="number"
+            name="persons"
+            min="1"
+            max="20"
+            value={form.persons}
             onChange={handleChange}
+            required
             className="w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-blue-500 focus:outline-none"
-            placeholder="+420 123 456 789"
           />
         </div>
 
@@ -275,26 +270,8 @@ export default function GuestRoomForm({
           />
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">
-            Počet osob
-          </label>
-
-          <input
-            type="number"
-            name="persons"
-            min="1"
-            max="20"
-            value={form.persons}
-            onChange={handleChange}
-            className="w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-blue-500 focus:outline-none"
-          />
-        </div>
-
         <div className="flex items-end">
-
           <label className="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-slate-300 px-4 py-3">
-
             <input
               type="checkbox"
               name="heating"
@@ -304,25 +281,17 @@ export default function GuestRoomForm({
             />
 
             <div>
-
-              <div className="font-medium">
-                Topení
-              </div>
+              <div className="font-medium">Topení</div>
 
               <div className="text-sm text-slate-500">
                 +{heatingPerDay.toLocaleString("cs-CZ")} Kč / den
               </div>
-
             </div>
-
           </label>
-
         </div>
-
       </div>
 
       <div>
-
         <label className="mb-2 block text-sm font-medium text-slate-700">
           Poznámka
         </label>
@@ -335,15 +304,18 @@ export default function GuestRoomForm({
           className="w-full rounded-lg border border-slate-300 px-4 py-3 focus:border-blue-500 focus:outline-none"
           placeholder="Volitelná poznámka..."
         />
-
       </div>
-            <div className="rounded-xl border bg-slate-50 p-6">
 
+      <div className="rounded-xl border bg-slate-50 p-6">
         <h3 className="mb-4 text-lg font-semibold">
           Souhrn rezervace
         </h3>
 
         <div className="space-y-3">
+          <div className="flex justify-between">
+            <span>Počet osob</span>
+            <strong>{form.persons}</strong>
+          </div>
 
           <div className="flex justify-between">
             <span>Počet nocí</span>
@@ -351,7 +323,7 @@ export default function GuestRoomForm({
           </div>
 
           <div className="flex justify-between">
-            <span>Cena za noc</span>
+            <span>Cena za osobu / noc</span>
             <strong>
               {roomPrice.toLocaleString("cs-CZ")} Kč
             </strong>
@@ -359,7 +331,8 @@ export default function GuestRoomForm({
 
           <div className="flex justify-between">
             <span>
-              Ubytování ({nights} × {roomPrice.toLocaleString("cs-CZ")} Kč)
+              Ubytování ({form.persons} osob × {nights} nocí ×{" "}
+              {roomPrice.toLocaleString("cs-CZ")} Kč)
             </span>
 
             <strong>
@@ -383,23 +356,17 @@ export default function GuestRoomForm({
           <hr />
 
           <div className="flex justify-between text-xl font-bold text-green-700">
-
             <span>CELKEM</span>
 
             <span>
               {total.toLocaleString("cs-CZ")} Kč
             </span>
-
           </div>
-
         </div>
-
       </div>
 
       {conflict && (
-
         <div className="rounded-xl border border-red-300 bg-red-50 p-5">
-
           <h3 className="mb-2 text-lg font-bold text-red-700">
             ⚠ Termín je obsazen
           </h3>
@@ -409,7 +376,6 @@ export default function GuestRoomForm({
           </p>
 
           <div className="space-y-1">
-
             <div>
               <strong>Host:</strong> {conflict.guestName}
             </div>
@@ -421,15 +387,11 @@ export default function GuestRoomForm({
             <div>
               <strong>Odjezd:</strong> {conflict.departure}
             </div>
-
           </div>
-
         </div>
-
       )}
 
       <div className="flex justify-end gap-3 pt-4">
-
         {selectedReservation && (
           <button
             type="button"
@@ -453,9 +415,7 @@ export default function GuestRoomForm({
             ? "💾 Uložit změny"
             : "➕ Uložit rezervaci"}
         </button>
-
       </div>
-
     </form>
   );
 }

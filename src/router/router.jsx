@@ -11,6 +11,7 @@ import Gas from "../pages/Gas";
 import Finance from "../pages/Finance";
 import Purchases from "../pages/Purchases";
 import FixedCosts from "../pages/FixedCosts";
+import Investments from "../pages/Investments";
 import Reports from "../pages/Reports";
 import Activities from "../pages/Activities";
 import Settings from "../pages/Settings";
@@ -55,6 +56,10 @@ const router = createBrowserRouter([
       {
         path: "fixed-costs",
         element: <FixedCosts />,
+      },
+      {
+        path: "investments",
+        element: <Investments />,
       },
       {
         path: "reports",

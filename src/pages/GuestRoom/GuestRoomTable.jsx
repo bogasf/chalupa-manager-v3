@@ -39,11 +39,10 @@ export default function GuestRoomTable({ onEdit }) {
   return (
     <div className="overflow-x-auto rounded-xl bg-white shadow">
       {reservations.length ? (
-        <table className="w-full min-w-[1100px]">
+        <table className="w-full min-w-[900px]">
           <thead className="bg-slate-100">
             <tr>
               <th className="p-3 text-left">Host</th>
-              <th className="p-3">Telefon</th>
               <th className="p-3">Příjezd</th>
               <th className="p-3">Odjezd</th>
               <th className="p-3 text-center">Osoby</th>
@@ -65,10 +64,6 @@ export default function GuestRoomTable({ onEdit }) {
                 </td>
 
                 <td className="p-3">
-                  {reservation.phone || "-"}
-                </td>
-
-                <td className="p-3">
                   {formatDate(reservation.arrival)}
                 </td>
 
@@ -77,7 +72,7 @@ export default function GuestRoomTable({ onEdit }) {
                 </td>
 
                 <td className="p-3 text-center">
-                  {reservation.persons}
+                  {Number(reservation.persons || 1)}
                 </td>
 
                 <td className="p-3 text-center">
